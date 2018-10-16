@@ -1,0 +1,133 @@
+:root {
+  --primary: #4caf50;
+  --secondary: #e47911;
+  --color-error: #ff0023;
+  --dark-grey: #787878;
+  --grey: #dcdcdc;
+  --light-grey: #eeeeee;
+  --chart-header-bkg: #37474f;
+}
+body {
+  height: 100%;
+  margin: 0;
+  user-select: none;
+}
+.container {
+  margin: .75rem;
+}
+.container__header {
+  background: var(--chart-header-bkg);
+  color: #ffffff;
+  display: flex;
+  font-size: 1.5rem;
+  justify-content: space-between;
+}
+.container__header > div {
+  padding: 1rem;
+}
+.container__header .container__info {
+  align-items: center;
+  background: var(--grey);
+  border: 0;
+  color: var(--chart-header-bkg);
+  display: flex;
+  font-size: 1rem;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 85px;
+  outline: 0;
+  padding: 1rem;
+}
+.container__header .button {
+  transition: background .5s;
+}
+.container__header .button:hover {
+  background: var(--light-grey);
+  cursor: pointer;
+}
+.container__chart {
+  height: 35vh;
+  margin: .75rem;
+  position: relative;
+  width: 480px;
+}
+.container__table {
+  margin: .75rem;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: auto;
+}
+table th, td {
+  padding: .4rem 1rem;
+}
+table.horizontal th {
+  background: var(--chart-header-bkg);
+  color: #ffffff;
+}
+table.horizontal th, table.horizontal td {
+  border: 1px solid var(--grey);
+}
+table.vertical td {
+  border-bottom: 1px solid var(--grey);
+}
+table.vertical tr td:nth-child(1) {
+  background: var(--chart-header-bkg);
+  color: #ffffff;
+}
+table.vertical tr td:nth-child(2) {
+  text-align: left;
+}
+table.vertical td:nth-child(even) {
+  border-left: 1px solid var(--grey);
+}
+table tr:hover {
+  background: var(--light-grey);
+}
+/* Meta Classes */
+.wrapper {
+  align-items: center;
+  display: flex;
+  flex-grow: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.box-shadow {
+  box-shadow: 0px 10px 15px var(--dark-grey);
+}
+.fade-in {
+  animation-name: fade-in;
+  animation-duration: 1s;
+  animation-fill-mode: forwards;
+}
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+/* Media Queries */
+@media screen and (max-width: 980px) {
+  .box-shadow {
+    box-shadow: none;
+  }
+  .wrapper {
+    flex-direction: column;
+  }
+  .chart-container {
+    margin: 0;
+    width: 100%;
+  }
+  table td, th {
+    padding: 4px;
+  }
+  table.vertical {
+    width: 100%;
+  }
+}
