@@ -1,11 +1,11 @@
 :root {
-  --primary: #4caf50;
-  --secondary: #e47911;
+  --color-primary: #4caf50;
+  --color-secondary: #e47911;
   --color-error: #ff0023;
-  --dark-grey: #787878;
-  --grey: #dcdcdc;
-  --light-grey: #eeeeee;
-  --chart-header-bkg: #37474f;
+  --color__grey--dark: #787878;
+  --color__grey: #dcdcdc;
+  --color__grey--light: #eeeeee;
+  --chart-header--bkg: #37474f;
 }
 body {
   height: 100%;
@@ -16,7 +16,7 @@ body {
   margin: .75rem;
 }
 .container__header {
-  background: var(--chart-header-bkg);
+  background: var(--chart-header--bkg);
   color: #ffffff;
   display: flex;
   font-size: 1.5rem;
@@ -27,9 +27,9 @@ body {
 }
 .container__header .container__info {
   align-items: center;
-  background: var(--grey);
+  background: var(--color__grey);
   border: 0;
-  color: var(--chart-header-bkg);
+  color: var(--chart-header--bkg);
   display: flex;
   font-size: 1rem;
   font-weight: 700;
@@ -42,7 +42,7 @@ body {
   transition: background .5s;
 }
 .container__header .button:hover {
-  background: var(--light-grey);
+  background: var(--color__grey--light);
   cursor: pointer;
 }
 .container__chart {
@@ -63,27 +63,27 @@ table th, td {
   padding: .4rem 1rem;
 }
 table.horizontal th {
-  background: var(--chart-header-bkg);
+  background: var(--chart-header--bkg);
   color: #ffffff;
 }
 table.horizontal th, table.horizontal td {
-  border: 1px solid var(--grey);
+  border: 1px solid var(--color__grey);
 }
 table.vertical td {
-  border-bottom: 1px solid var(--grey);
+  border-bottom: 1px solid var(--color__grey);
 }
 table.vertical tr td:nth-child(1) {
-  background: var(--chart-header-bkg);
+  background: var(--chart-header--bkg);
   color: #ffffff;
 }
 table.vertical tr td:nth-child(2) {
   text-align: left;
 }
 table.vertical td:nth-child(even) {
-  border-left: 1px solid var(--grey);
+  border-left: 1px solid var(--color__grey);
 }
 table tr:hover {
-  background: var(--light-grey);
+  background: var(--color__grey--light);
 }
 /* Meta Classes */
 .wrapper {
@@ -94,7 +94,7 @@ table tr:hover {
   justify-content: center;
 }
 .box-shadow {
-  box-shadow: 0px 10px 15px var(--dark-grey);
+  box-shadow: 0px 10px 15px var(--color__grey--dark);
 }
 .fade-in {
   animation-name: fade-in;
