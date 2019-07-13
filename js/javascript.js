@@ -31,86 +31,114 @@ var ChartModule = (function() {
 			});
 		},
 
-		optionsHorizontalBar: function() {
-			return {
-				legend: {
-					display: false
-				},
-				scales: {
-					xAxes: [{
-						ticks: {
-							beginAtZero: false
-						}
-					}]
-				}
-			};
-		},
+		options: {
 
-		optionsLine: function() {
-			return {
-				scales: {
-					xAxes: [{
-						ticks: {
-							display: false
-						}
-					}],
-					yAxes: [{
-						ticks: {
-							beginAtZero: true
-						}
-					}]
-				},
-				tooltips: {
-					mode: 'index'
-				}
-			};
-		},
-
-		tooltipCallbackDual: function(obj) {
-			return {
-				label: function(tooltipItem) {
-					if (tooltipItem.datasetIndex === 0) {
-						return obj.tooltipText_in[tooltipItem.index];
-					} else if (tooltipItem.datasetIndex === 1) {
-						return obj.tooltipText_out[tooltipItem.index];
+			horizontalbar: function() {
+				return {
+					legend: {
+						display: false
+					},
+					scales: {
+						xAxes: [{
+							ticks: {
+								beginAtZero: false
+							}
+						}]
 					}
-				},
-				title: function(tooltipItem, data) {
-					return data.labels[tooltipItem[0].index];
-				}
-			};
+				};
+			},
+
+			line: function() {
+				return {
+					scales: {
+						xAxes: [{
+							ticks: {
+								display: false
+							}
+						}],
+						yAxes: [{
+							ticks: {
+								beginAtZero: true
+							}
+						}]
+					},
+					tooltips: {
+						mode: 'index'
+					}
+				};
+			}
+
 		},
 
-		tooltipCallbackPercentage: function(obj) {
-			return {
-				label: function(tooltipItem, data) {
-					let dataset = data.datasets[tooltipItem.datasetIndex];
-					let total = dataset.data.reduce((pre, cur) => pre + cur);
-					let currentValue = dataset.data[tooltipItem.index];
-					let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
-					return obj.tooltipText[tooltipItem.index] + ' ' + percentage + '%';
-				},
-				title: function(tooltipItem, data) {
-					return data.labels[tooltipItem[0].index];
-				}
-			};
-		},
+		ticks: {
 
-		tooltipCallbackTemperature: function(obj) {
-			return {
-				label: function(tooltipItem, data) {
-					let dataset = data.datasets[tooltipItem.datasetIndex];
-					let currentValue = dataset.data[tooltipItem.index];
-					return currentValue + " \u2103";
-				},
-				title: function(tooltipItem) {
-					if (obj.tooltipText) {
-						return obj.tooltipText[tooltipItem[0].index];
+			bytes: function() {
+				return function(data) {
+					if (data >= BYTES.TB) {
+						return result = Math.ceil((data / BYTES.TB).toFixed(2) * 100) / 100 + ' TB';
+					} else if (data >= BYTES.GB) {
+						return result = Math.ceil((data / BYTES.GB).toFixed(2) * 10) / 10 + ' GB';
+					} else if (data >= BYTES.MB) {
+						return result = Math.ceil((data / BYTES.MB).toFixed(2) * 2) / 2 + ' MB';
+					} else if (data >= BYTES.KB) {
+						return result = Math.round((data / BYTES.KB).toFixed(2) * 2) / 2 + ' KB';
 					} else {
-						return obj.labels[tooltipItem[0].index];
+						return result = data + ' B';
 					}
 				}
-			};
+			}
+
+		},
+
+		tooltip: {
+
+			dual: function(obj) {
+				return {
+					label: function(tooltipItem) {
+						if (tooltipItem.datasetIndex === 0) {
+							return obj.tooltipText_in[tooltipItem.index];
+						} else if (tooltipItem.datasetIndex === 1) {
+							return obj.tooltipText_out[tooltipItem.index];
+						}
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				};
+			},
+
+			percent: function(obj) {
+				return {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let total = dataset.data.reduce((pre, cur) => pre + cur);
+						let currentValue = dataset.data[tooltipItem.index];
+						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
+						return obj.tooltipText[tooltipItem.index] + ' ' + percentage + '%';
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				};
+			},
+
+			temp: function(obj) {
+				return {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let currentValue = dataset.data[tooltipItem.index];
+						return currentValue + " \u2103";
+					},
+					title: function(tooltipItem) {
+						if (obj.tooltipText) {
+							return obj.tooltipText[tooltipItem[0].index];
+						} else {
+							return obj.labels[tooltipItem[0].index];
+						}
+					}
+				};
+			}
+
 		},
 
 		updateDataPoint: function(obj, data, label, text) {
@@ -179,33 +207,15 @@ var ChartModule = (function() {
 				tt ? obj.tooltipText.push(data[key]['formatted']) : '';
 			}
 			obj.chart.update();
-		},
-
-		ticksCallbackFormattedBytes: function() {
-			return function(data) {
-				let result;
-				if (data >= BYTES.TB) {
-					result = Math.ceil((data / BYTES.TB).toFixed(2) * 100) / 100 + ' TB';
-				} else if (data >= BYTES.GB) {
-					result = Math.ceil((data / BYTES.GB).toFixed(2) * 10) / 10 + ' GB';
-				} else if (data >= BYTES.MB) {
-					result = Math.ceil((data / BYTES.MB).toFixed(2) * 2) / 2 + ' MB';
-				} else if (data >= BYTES.KB) {
-					result = Math.round((data / BYTES.KB).toFixed(2) * 2) / 2 + ' KB';
-				} else {
-					result = data + ' B';
-				}
-				return result;
-			}
 		}
 
 	};
 
-})();
+}());
 
-var CpuLoadAverageModule = (function() {
+var Cpu = {
 
-	return {
+	loadAverage: {
 
 		labels: [],
 		dataPoints: [],
@@ -250,16 +260,12 @@ var CpuLoadAverageModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsLine();
+			return ChartModule.options.line();
 		}
 
-	};
+	},
 
-})();
-
-var CpuTemperatureModule = (function() {
-
-	return {
+	temp: {
 
 		labels: [],
 		dataPoints: [],
@@ -268,7 +274,7 @@ var CpuTemperatureModule = (function() {
 			r.forEach((v, i) => this.labels.push('Core ' + i));
 			this.dataPoints = r;
 			this.chart = ChartModule.init.call(this, 'cpu-temps', 'horizontalBar');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltipCallbackTemperature(this);
+			this.chart.options.tooltips.callbacks = ChartModule.tooltip.temp(this);
 			this.chart.options.scales.xAxes[0].ticks.min = 30;
 			this.chart.options.scales.xAxes[0].ticks.max = 100;
 			this.chart.update();
@@ -285,16 +291,16 @@ var CpuTemperatureModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsHorizontalBar();
+			return ChartModule.options.horizontalbar();
 		}
 
-	};
+	}
 
-})();
+};
 
-var DiskBandwidthModule = (function() {
+var Disk = {
 
-	return {
+	bandwidth: {
 
 		dataPoints: [],
 		tooltipText_in: [],
@@ -305,10 +311,10 @@ var DiskBandwidthModule = (function() {
 			this.tooltipText_in.push(this.dataPoints['formatted_in']);
 			this.tooltipText_out.push(this.dataPoints['formatted_out']);
 			this.chart = ChartModule.init.call(this, 'disk-bandwidth', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltipCallbackDual(this);
-			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticksCallbackFormattedBytes();
+			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
+			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticks.bytes();
 			this.chart.update();
-			this.diskIO.init(r['io']);
+			// this.diskIO.init(r['io']);
 		},
 
 		data: function() {
@@ -335,24 +341,20 @@ var DiskBandwidthModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsLine();
-		},
+			return ChartModule.options.line();
+		}
 
-		diskIO: {
+	},
 
-			init: function(r) {
+	io: {
 
-			}
+		init: function(r) {
 
 		}
 
-	};
+	},
 
-})();
-
-var DiskTemperatureModule = (function() {
-
-	return {
+	temp: {
 
 		labels: [],
 		dataPoints: [],
@@ -365,7 +367,7 @@ var DiskTemperatureModule = (function() {
 				this.tooltipText.push(tt[key]);
 			}
 			this.chart = ChartModule.init.call(this, 'disk-temps', 'horizontalBar');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltipCallbackTemperature(this);
+			this.chart.options.tooltips.callbacks = ChartModule.tooltip.temp(this);
 			this.chart.options.scales.xAxes[0].ticks.min = 20;
 			this.chart.options.scales.xAxes[0].ticks.max = 50;
 			this.chart.update();
@@ -382,16 +384,12 @@ var DiskTemperatureModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsHorizontalBar();
+			return ChartModule.options.horizontalbar();
 		}
 
-	};
+	},
 
-})();
-
-var DiskUsageModule = (function() {
-
-	return {
+	usage: {
 
 		labels: [],
 		dataPoints: [],
@@ -430,7 +428,7 @@ var DiskUsageModule = (function() {
 		},
 
 		tooltipCallback: function() {
-			return ChartModule.tooltipCallbackPercentage(this);
+			return ChartModule.tooltip.percent(this);
 		},
 
 		snapshotUsage: {
@@ -446,18 +444,18 @@ var DiskUsageModule = (function() {
 			},
 
 			tooltipCallback: function() {
-				return ChartModule.tooltipCallbackPercentage(this);
+				return ChartModule.tooltip.percent(this);
 			}
 
 		}
 
-	};
+	}
 
-})();
+};
 
-var MemoryUsageModule = (function() {
+var Memory = {
 
-	return {
+	usage: {
 
 		init: function(r, aux) {
 			ChartModule.replaceDataArray(this, r);
@@ -481,18 +479,18 @@ var MemoryUsageModule = (function() {
 					animateRotate: true
 				},
 				tooltips: {
-					callbacks: ChartModule.tooltipCallbackPercentage(this)
+					callbacks: ChartModule.tooltip.percent(this)
 				}
 			};
 		}
 
-	};
+	}
 
-})();
+};
 
-var NetworkBandwidthModule = (function() {
+var Network = {
 
-	return {
+	bandwidth: {
 
 		dataPoints: [],
 		tooltipText_in: [],
@@ -503,8 +501,8 @@ var NetworkBandwidthModule = (function() {
 			this.tooltipText_in.push(this.dataPoints['formatted_in']);
 			this.tooltipText_out.push(this.dataPoints['formatted_out']);
 			this.chart = ChartModule.init.call(this, 'txrx-current', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltipCallbackDual(this);
-			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticksCallbackFormattedBytes();
+			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
+			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticks.bytes();
 			this.chart.update();
 		},
 
@@ -532,69 +530,70 @@ var NetworkBandwidthModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsLine();
+			return ChartModule.options.line();
 		}
 
-	};
+	}
 
-})();
+};
 
-var SystemProcessesModule = (function() {
+var System = {
 
-	let fields = [
-		{ 'title': 'User', 'field': 'user' },
-		// {'title': 'PID', 'field': 'pid'},
-		{ 'title': 'Time', 'field': 'time' },
-		{ 'title': 'TC', 'field': 'nlwp' },
-		{ 'title': 'CPU', 'field': 'pcpu' },
-		{ 'title': 'Mem', 'field': 'pmem' },
-		{ 'title': 'CMD', 'field': 'comm' }
-		// {'title': 'Data Size', 'field': 'dsiz'}
-		// {'title': 'Elapsed', 'field': 'etimes'}
-	];
+	processes: {
 
-	return {
+		fields: [
+			{ 'title': 'User', 'field': 'user' },
+			// {'title': 'PID', 'field': 'pid'},
+			{ 'title': 'Time', 'field': 'time' },
+			{ 'title': 'TC', 'field': 'nlwp' },
+			{ 'title': 'CPU', 'field': 'pcpu' },
+			{ 'title': 'Mem', 'field': 'pmem' },
+			{ 'title': 'CMD', 'field': 'comm' }
+			// {'title': 'Data Size', 'field': 'dsiz'}
+			// {'title': 'Elapsed', 'field': 'etimes'}
+		],
+
 		init: function(r, aux) {
-			Table.createHorizontal(SystemSpecsModule.parse, 'top-processes', fields, r);
+			Table.createHorizontal(System.specs.parse, 'top-processes', this.fields, r);
 			document.querySelector('div[data-name="top-processes"]').textContent = aux + ' Total';
 		}
-	};
+		
+	},
 
-})();
+	specs: {
 
-var SystemSpecsModule = (function() {
+		fields: [
+			{ 'title': 'Hostname', 'field': 'hostname' },
+			{ 'title': 'OS', 'field': 'os' },
+			{ 'title': 'Version', 'field': 'os_version' },
+			{ 'title': 'Kernel', 'field': 'kernel_version' },
+			{ 'title': 'Platform OS', 'field': 'platform_os' },
+			{ 'title': 'CPU Model', 'field': 'cpu_model' },
+			{ 'title': 'Motherboard', 'field': 'motherboard' },
+			{ 'title': 'System', 'field': 'system' },
+			{ 'title': 'System BIOS', 'field': 'system_bios' },
+			{ 'title': 'System Uptime', 'field': 'system_uptime' },
+			{ 'title': 'Disk Interface', 'field': 'disk_interface' },
+			{ 'title': 'Network Interface', 'field': 'network_interface' },
+			{ 'title': 'USB Interface', 'field': 'usb_interface' },
+			{ 'title': 'UPS Info', 'field': 'ups_info' }
+		],
 
-	let fields = [
-		{ 'title': 'Hostname', 'field': 'hostname' },
-		{ 'title': 'OS', 'field': 'os' },
-		{ 'title': 'Version', 'field': 'os_version' },
-		{ 'title': 'Kernel', 'field': 'kernel_version' },
-		{ 'title': 'Platform OS', 'field': 'platform_os' },
-		{ 'title': 'CPU Model', 'field': 'cpu_model' },
-		{ 'title': 'Motherboard', 'field': 'motherboard' },
-		{ 'title': 'System', 'field': 'system' },
-		{ 'title': 'System BIOS', 'field': 'system_bios' },
-		{ 'title': 'System Uptime', 'field': 'system_uptime' },
-		{ 'title': 'Disk Interface', 'field': 'disk_interface' },
-		{ 'title': 'Network Interface', 'field': 'network_interface' },
-		{ 'title': 'USB Interface', 'field': 'usb_interface' },
-		{ 'title': 'UPS Info', 'field': 'ups_info' }
-	];
-
-	return {
 		init: function(r) {
-			Table.createVertical(this.parse, 'system-specs', fields, r);
+			Table.createVertical(this.parse, 'system-specs', this.fields, r);
 		},
+
 		parse: function(fieldValue, response) {
 			return response[fieldValue.field];
 		}
-	};
 
-})();
+	}
 
-var UpsInfoModule = (function() {
+};
 
-	return {
+var Ups = {
+
+	info: {
 
 		labels: [],
 		dataPoints: [],
@@ -606,7 +605,7 @@ var UpsInfoModule = (function() {
 			this.tooltipText_in.push(r['input_voltage']['actual']);
 			this.tooltipText_out.push(r['battery_voltage']['actual']);
 			this.chart = ChartModule.init.call(this, 'ups-info', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltipCallbackDual(this);
+			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
 			this.chart.update();
 		},
 
@@ -634,11 +633,11 @@ var UpsInfoModule = (function() {
 		},
 
 		options: function() {
-			return ChartModule.optionsLine();
+			return ChartModule.options.line();
 		}
-	};
+	}
 
-})();
+};
 
 var Table = {
 
@@ -741,42 +740,42 @@ var App = {
 	modulesInit: function(r, type) {
 		switch (type) {
 			case 'disk':
-				DiskTemperatureModule.init(r['disk_temps'], r['disk_info']);
-				UpsInfoModule.init(r['ups_stats']);
+				Disk.temp.init(r['disk_temps'], r['disk_info']);
+				Ups.info.init(r['ups_stats']);
 				break;
 			case 'mem':
-				MemoryUsageModule.init(r['memory_usage'], r['memory_total']);
+				Memory.usage.init(r['memory_usage'], r['memory_total']);
 				break;
 			case 'poll':
-				DiskBandwidthModule.init(r['disk_io_stats']);
-				NetworkBandwidthModule.init(r['txrx_current']);
+				Disk.bandwidth.init(r['disk_io_stats']);
+				Network.bandwidth.init(r['txrx_current']);
 				break;
 			case 'init':
-				SystemSpecsModule.init(r);
-				SystemProcessesModule.init(r['top_processes'], r['process_count']);
-				CpuLoadAverageModule.init(r['cpu_load_average'], r['cpu_frequency']);
-				CpuTemperatureModule.init(r['cpu_temps']);
-				DiskUsageModule.init(r['dataset_usage']);
+				System.specs.init(r);
+				System.processes.init(r['top_processes'], r['process_count']);
+				Cpu.loadAverage.init(r['cpu_load_average'], r['cpu_frequency']);
+				Cpu.temp.init(r['cpu_temps']);
+				Disk.usage.init(r['dataset_usage']);
 		}
 	},
 
 	modulesUpdate: function(r, type) {
 		switch (type) {
 			case 'disk':
-				ChartModule.replaceDataObject(DiskTemperatureModule, r['disk_temps']);
-				// DiskUsageModule.init(r['dataset_usage']);
-				ChartModule.updateDataObject(UpsInfoModule, r['ups_stats'], this.currentTime());
+				ChartModule.replaceDataObject(Disk.temp, r['disk_temps']);
+				// Disk.usage.init(r['dataset_usage']);
+				ChartModule.updateDataObject(Ups.info, r['ups_stats'], this.currentTime());
 				break;
 			case 'mem':
-				ChartModule.replaceDataArray(MemoryUsageModule, r['memory_usage'], true);
-				// MemoryUsageModule.update(r['memory_usage']);
+				ChartModule.replaceDataArray(Memory.usage, r['memory_usage'], true);
+				// Memory.usage.update(r['memory_usage']);
 				break;
 			case 'poll':
-				ChartModule.updateDataObject(DiskBandwidthModule, r['disk_io_stats']['bw'], this.currentTime());
-				ChartModule.updateDataObject(NetworkBandwidthModule, r['txrx_current']['all'], this.currentTime());
-				SystemProcessesModule.init(r['top_processes'], r['process_count']);
-				ChartModule.updateDataPoint(CpuLoadAverageModule, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);
-				ChartModule.replaceData(CpuTemperatureModule, r['cpu_temps']);
+				ChartModule.updateDataObject(Disk.bandwidth, r['disk_io_stats']['bw'], this.currentTime());
+				ChartModule.updateDataObject(Network.bandwidth, r['txrx_current']['all'], this.currentTime());
+				System.processes.init(r['top_processes'], r['process_count']);
+				ChartModule.updateDataPoint(Cpu.loadAverage, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);
+				ChartModule.replaceData(Cpu.temp, r['cpu_temps']);
 		}
 	},
 

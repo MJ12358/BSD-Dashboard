@@ -1,7 +1,5 @@
 <?php
 
-// include_once '/mnt/tank/www/php/purify.php';
-
 class Shell {
 
   public static function exec($cmd) {
