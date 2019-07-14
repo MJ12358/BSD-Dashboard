@@ -97,54 +97,54 @@ class Convert {
 
 }
 
-class Cpu {
+// class Cpu {
 
-  private static $core_count;
+//   private static $core_count;
 
-  public static function cores() {
-    $cmd = 'sysctl -n hw.ncpu';
-    self::$core_count = intval(Shell::exec($cmd));
-    return empty(self::$core_count) ? 1 : self::$core_count;
-  }
+//   public static function cores() {
+//     $cmd = 'sysctl -n hw.ncpu';
+//     self::$core_count = intval(Shell::exec($cmd));
+//     return empty(self::$core_count) ? 1 : self::$core_count;
+//   }
 
-  // public function current_load() {
-  //   $cmd = 'top -P ---btIquz';
-  // }
+//   // public function current_load() {
+//   //   $cmd = 'top -P ---btIquz';
+//   // }
 
-  public static function frequency() {
-    $cmd = 'sysctl -n dev.cpu.0.freq';
-    return Shell::exec($cmd) . ' Mhz';
-  }
+//   public static function frequency() {
+//     $cmd = 'sysctl -n dev.cpu.0.freq';
+//     return Shell::exec($cmd) . ' Mhz';
+//   }
 
-  public static function load_average() {
-    $rs = sys_getloadavg();
-    $result = array();
-    foreach($rs as $key => $value) {
-      $result[] = round($value, 2);
-    }
-    return $result;
-  }
+//   public static function load_average() {
+//     $rs = sys_getloadavg();
+//     $result = array();
+//     foreach($rs as $key => $value) {
+//       $result[] = round($value, 2);
+//     }
+//     return $result;
+//   }
 
-  public static function model() {
-    $cmd = 'sysctl -n hw.model';
-    return Shell::exec($cmd);
-  }
+//   public static function model() {
+//     $cmd = 'sysctl -n hw.model';
+//     return Shell::exec($cmd);
+//   }
 
-  public static function temperature() {
-    $temps = array();
-    for($i = 0; $i < self::$core_count; $i++) {
-      $cmd = 'sysctl -n dev.cpu.' . $i . '.temperature';
-      $temps[] = floatval(explode('C', Shell::exec($cmd))[0]);
-    }
-    return $temps;
-  }
+//   public static function temperature() {
+//     $temps = array();
+//     for($i = 0; $i < self::$core_count; $i++) {
+//       $cmd = 'sysctl -n dev.cpu.' . $i . '.temperature';
+//       $temps[] = floatval(explode('C', Shell::exec($cmd))[0]);
+//     }
+//     return $temps;
+//   }
 
-  public static function tj_max() {
-    $cmd = 'sysctl -n dev.cpu.0.coretemp.tjmax';
-    return Shell::exec($cmd);
-  }
+//   public static function tj_max() {
+//     $cmd = 'sysctl -n dev.cpu.0.coretemp.tjmax';
+//     return Shell::exec($cmd);
+//   }
 
-}
+// }
 
 class Disk {
 
@@ -403,8 +403,8 @@ class System {
   }
 
   public static function top_processes() {
-    // would be nice to output 'command' but it may have spaces in it
-    $cmd = 'ps -rAo user,pid,time,nlwp,pcpu,pmem,comm,dsiz | grep -v root | head -10 | tail -n +2';
+    // would be nice to output 'command' but it may have spaces in it ('args' seems to do the same thing)
+    $cmd = 'ps -rAo user,pid,time,nlwp,pcpu,pmem,comm,dsiz,etimes | grep -v root | head -10 | tail -n +2';
     $result = Shell::exec($cmd);
     $result = explode(PHP_EOL, $result);
     $results = array();
@@ -480,7 +480,7 @@ class Usb {
 class GenerateData {
 
   public function __construct($type) {
-    Cpu::cores();
+    // Cpu::cores();
     Disk::count();
     switch ($type) {
       case 'init':
@@ -499,10 +499,10 @@ class GenerateData {
 
   private static function initial() {
     echo json_encode(array(
-      'cpu_frequency' => Cpu::frequency(),
-      'cpu_load_average' => Cpu::load_average(),
-      'cpu_model' => Cpu::model(),
-      'cpu_temps' => Cpu::temperature(),
+      // 'cpu_frequency' => Cpu::frequency(),
+      // 'cpu_load_average' => Cpu::load_average(),
+      // 'cpu_model' => Cpu::model(),
+      // 'cpu_temps' => Cpu::temperature(),
       // 'cpu_tj_max' => Cpu::tj_max(),
       'dataset_usage' => Disk::dataset_usage(),
       // 'disk_info' => Disk::disk_info(),
@@ -525,9 +525,9 @@ class GenerateData {
 
   private static function dynamic_poll() {
     echo json_encode(array(
-      'cpu_frequency' => Cpu::frequency(),
-      'cpu_load_average' => Cpu::load_average(),
-      'cpu_temps' => Cpu::temperature(),
+      // 'cpu_frequency' => Cpu::frequency(),
+      // 'cpu_load_average' => Cpu::load_average(),
+      // 'cpu_temps' => Cpu::temperature(),
       'process_count' => System::process_count(),
       'top_processes' => System::top_processes(),
       'disk_io_stats' => Disk::io_stats(),

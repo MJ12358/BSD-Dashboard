@@ -1,9 +1,27 @@
 // TODO: disk io chart
+// TODO: per cpu utilization
+// TODO: memory usage per process
 Chart.defaults.global.responsive = true;
 Chart.defaults.global.maintainAspectRatio = false;
+Chart.defaults.global.tooltips.intersect = false;
+var defaults = {
+	responsive: true,
+	maintainAspectRatio: false,
+	hover: {
+		mode: 'nearest',
+		intersect: false
+	},
+	tooltips: {
+		mode: 'nearest',
+		intersect: false
+	}
+};
 
 var colors = ['#5cbbe6', '#b6d957', '#fac364', '#8cd3ff', '#da98cb',
 	'#f2d249', '#92b9c6', '#ccc5a8', '#52bacc', '#dcdb46', '#98aafb'];
+
+var colorsAlpha = ['rgba(92,187,230,.2)', 'rgba(182,217,87,.2)', 'rgba(250,195,100,.2)', 'rgba(140,211,255,.2)', 'rgba(218,152,203,.2)',
+	'rgba(242,210,73,.2)', 'rgba(146,185,198,.2)', 'rgba(204,197,168,.2)', 'rgba(82,186,204,.2)', 'rgba(220,219,70,.2)', 'rgba(152,170,251,.2)'];
 
 var ChartModule = (function() {
 
@@ -213,91 +231,226 @@ var ChartModule = (function() {
 
 }());
 
-var Cpu = {
+/**
+ * Cpu load average chart
+ */
+(function(undefined) {
 
-	loadAverage: {
+	let chart;
 
-		labels: [],
-		dataPoints: [],
+	function init() {
+		let ctx = document.getElementById('cpu-load-average-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+	};
 
-		init: function(r, aux) {
-			this.labels.push(App.currentTime());
-			this.dataPoints = r;
-			this.chart = ChartModule.init.call(this, 'cpu-load-average', 'line');
-			this.button.textContent = aux;
+	function update() {
+		Xhr.request({ url: 'php/cpu/loadaverage.php' })
+			.then(r => {
+				document.querySelector('[data-name="cpu-load-average"]').textContent = r['clock'];
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: r['data'][i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: [
+				{
+					label: '1 Min',
+					data: [],
+					backgroundColor: colorsAlpha[0],
+					borderColor: colors[0],
+					pointBorderColor: colors[0],
+					pointHoverBorderColor: colors[0]
+				},
+				{
+					label: '5 Min',
+					data: [],
+					backgroundColor: colorsAlpha[1],
+					borderColor: colors[1],
+					pointBorderColor: colors[1],
+					pointHoverBorderColor: colors[1]
+				},
+				{
+					label: '15 Min',
+					data: [],
+					backgroundColor: colorsAlpha[2],
+					borderColor: colors[2],
+					pointBorderColor: colors[2],
+					pointHoverBorderColor: colors[2]
+				}
+			]
 		},
-
-		data: function() {
-			return {
-				labels: this.labels,
-				datasets: [
-					{
-						label: '1 Min',
-						data: [this.dataPoints[0]],
-						backgroundColor: 'rgba(250, 195, 100, .2)',
-						borderColor: '#fac364',
-						pointBorderColor: '#fac364',
-						pointHoverBorderColor: '#fac364'
-					},
-					{
-						label: '5 Min',
-						data: [this.dataPoints[1]],
-						backgroundColor: 'rgba(182, 217, 87, .2)',
-						borderColor: '#b6d957',
-						pointBorderColor: '#b6d957',
-						pointHoverBorderColor: '#b6d957'
-					},
-					{
-						label: '15 Min',
-						data: [this.dataPoints[2]],
-						backgroundColor: 'rgba(140, 211, 255, .2)',
-						borderColor: '#8cd3ff',
-						pointBorderColor: '#8cd3ff',
-						pointHoverBorderColor: '#8cd3ff'
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 30000,
+						refresh: 5000,
+						delay: 5000,
+						onRefresh: update
 					}
-				]
-			};
-		},
-
-		options: function() {
-			return ChartModule.options.line();
-		}
-
-	},
-
-	temp: {
-
-		labels: [],
-		dataPoints: [],
-
-		init: function(r) {
-			r.forEach((v, i) => this.labels.push('Core ' + i));
-			this.dataPoints = r;
-			this.chart = ChartModule.init.call(this, 'cpu-temps', 'horizontalBar');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltip.temp(this);
-			this.chart.options.scales.xAxes[0].ticks.min = 30;
-			this.chart.options.scales.xAxes[0].ticks.max = 100;
-			this.chart.update();
-		},
-
-		data: function() {
-			return {
-				labels: this.labels,
-				datasets: [{
-					data: this.dataPoints,
-					backgroundColor: colors
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true
+					}
 				}]
-			};
-		},
-
-		options: function() {
-			return ChartModule.options.horizontalbar();
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			}
 		}
+	};
 
+	init();
+
+}());
+
+/**
+ * Cpu temperature chart
+ */
+(function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('cpu-temps-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+		setInterval(() => update(), 5000);
+	};
+
+	function update() {
+		Xhr.request({ url: 'php/cpu/temperature.php' })
+			.then(r => {
+				// chart.data.datasets[0].labels = r['data'].reduce((a, b, i) => a.push('CPU ' + i), []);
+				chart.data.datasets[0].data = r['data'];
+				chart.update();
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'horizontalBar',
+		data: {
+			labels: ['CPU 1', 'CPU 2', 'CPU 3', 'CPU 4', 'CPU 5', 'CPU 6', 'CPU 7', 'CPU 8'],
+			// labels: [],
+			datasets: [{
+				data: [],
+				backgroundColor: colors
+			}]
+		},
+		options: {
+			legend: {
+				display: false
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						beginAtZero: false,
+						min: 30,
+						max: 100
+					}
+				}]
+			},
+			tooltips: {
+				// callbacks: ChartModule.tooltip.temp(this)
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
+ * Disk bandwidth chart
+ */
+(function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('disk-bandwidth-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
 	}
 
-};
+	function update() {
+		Xhr.request({ url: 'php/disk/bandwidth.php' })
+			.then(r => {
+				// document.querySelector('[data-name="cpu-load-average"]').textContent = r['clock'];
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: r['data'][i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	}
 
+	let config = {
+		type: 'line',
+		data: {
+			datasets: [
+				{
+					label: 'Read',
+					data: [],
+					backgroundColor: colorsAlpha[0],
+					borderColor: colors[0],
+					pointBorderColor: colors[0],
+					pointHoverBorderColor: colors[0]
+				},
+				{
+					label: 'Write',
+					data: [],
+					backgroundColor: colorsAlpha[1],
+					borderColor: colors[1],
+					pointBorderColor: colors[1],
+					pointHoverBorderColor: colors[1]
+				}
+			]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 30000,
+						refresh: 5000,
+						delay: 5000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			}
+		}
+	}
+
+}());
 var Disk = {
 
 	bandwidth: {
@@ -557,7 +710,7 @@ var System = {
 			Table.createHorizontal(System.specs.parse, 'top-processes', this.fields, r);
 			document.querySelector('div[data-name="top-processes"]').textContent = aux + ' Total';
 		}
-		
+
 	},
 
 	specs: {
@@ -753,8 +906,8 @@ var App = {
 			case 'init':
 				System.specs.init(r);
 				System.processes.init(r['top_processes'], r['process_count']);
-				Cpu.loadAverage.init(r['cpu_load_average'], r['cpu_frequency']);
-				Cpu.temp.init(r['cpu_temps']);
+				// Cpu.loadAverage.init(r['cpu_load_average'], r['cpu_frequency']);
+				// Cpu.temp.init(r['cpu_temps']);
 				Disk.usage.init(r['dataset_usage']);
 		}
 	},
@@ -762,7 +915,7 @@ var App = {
 	modulesUpdate: function(r, type) {
 		switch (type) {
 			case 'disk':
-				ChartModule.replaceDataObject(Disk.temp, r['disk_temps']);
+				// ChartModule.replaceDataObject(Disk.temp, r['disk_temps']);
 				// Disk.usage.init(r['dataset_usage']);
 				ChartModule.updateDataObject(Ups.info, r['ups_stats'], this.currentTime());
 				break;
@@ -774,8 +927,8 @@ var App = {
 				ChartModule.updateDataObject(Disk.bandwidth, r['disk_io_stats']['bw'], this.currentTime());
 				ChartModule.updateDataObject(Network.bandwidth, r['txrx_current']['all'], this.currentTime());
 				System.processes.init(r['top_processes'], r['process_count']);
-				ChartModule.updateDataPoint(Cpu.loadAverage, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);
-				ChartModule.replaceData(Cpu.temp, r['cpu_temps']);
+			// ChartModule.updateDataPoint(Cpu.loadAverage, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);
+			// ChartModule.replaceData(Cpu.temp, r['cpu_temps']);
 		}
 	},
 
@@ -802,4 +955,5 @@ var App = {
 
 if (!navigator.userAgent.match(/bot|spider/gi)) {
 	App.init();
+	// Object.assign(Chart.defaults.global, defaults);
 }
