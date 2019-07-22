@@ -131,3 +131,26 @@ table tr:hover {
     width: 100%;
   }
 }
+/* new */
+.content {
+	background-color: #ffffff;
+	bottom: 0;
+	left: 15vw;
+	height: 100vh;
+	padding: 20px;
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: calc(100vw - 15vw);
+}
+[type=radio]:checked~label~.content {
+	z-index: 1;
+}
+/* SLDS overrides */
+html {
+	background: #ffffff !important;
+}
+.slds-nav-vertical__section {
+	width: 15vw;
+}
+

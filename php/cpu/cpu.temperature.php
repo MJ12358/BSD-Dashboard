@@ -6,12 +6,12 @@ class Temperature extends Cpu {
 	public function __construct() {
 		parent::__construct();
 		echo json_encode(array(
-			'data' => $this->temperature(),
-			'tjmax' => $this->tj_max()
+			'data' => $this->getTemperature(),
+			'tjmax' => $this->getTj_max()
 		));
 	}
 
-  public function temperature() {
+  public function getTemperature() {
     $temps = array();
     for($i = 0; $i < $this->$core_count; $i++) {
       $cmd = 'sysctl -n dev.cpu.' . $i . '.temperature';
@@ -24,7 +24,7 @@ class Temperature extends Cpu {
     return $temps;
   }
 
-  public function tj_max() {
+  public function getTj_max() {
     $cmd = 'sysctl -n dev.cpu.0.coretemp.tjmax';
     return floatval(explode('C', Shell::exec($cmd))[0]);
   }

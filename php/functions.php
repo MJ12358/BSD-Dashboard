@@ -1,5 +1,8 @@
 <?php
 
+// sysctl kstat
+// systat -vmstat
+
 class Shell {
 
   public static function exec($cmd) {
@@ -146,146 +149,40 @@ class Convert {
 
 // }
 
-class Disk {
+// class Memory {
 
-  private static $disk_count;
+//   public static function current_usage() {
+//     $cmd = 'top -btIquz | tail -n +4 | head -2 | cut -d : -f2';
+//     $result = Shell::exec($cmd);
+//     $result = preg_replace("/\n\s/", ', ', $result);
+//     $result = explode(', ', $result);
+//     $results = array();
+//     foreach($result as $k => $v) {
+//       $values = explode(' ', $v);
+//       if ($values[1] !== 'Total') {
+//         $results[] = array(
+//           'title' => $values[1],
+//           'bytes' => Convert::to_bytes($values[0]),
+//           'formatted' => $values[0]
+//         );
+//       }
+//     }
+//     return $results;
+//   }
 
-  public static function count() {
-    $cmd = 'sysctl -n kern.disks';
-    $result = explode(' ', Shell::exec($cmd));
-    self::$disk_count = $result;
-  }
+//   public static function total() {
+//     $cmd = 'sysctl -n hw.physmem';
+//     $result = Shell::exec($cmd);
+//     return Convert::from_bytes($result);
+//   }
 
-  public static function dataset_usage() {
-    $cmd = 'zfs list -o name,usedds,usedsnap | tail -n +3';
-    $datasets = explode(PHP_EOL, preg_replace('/\h+/', ' ', Shell::exec($cmd)));
-    $result = array();
-    foreach($datasets as $key => $value) {
-      $dataset = preg_split('/\/|\s/', $value);
-      $name = $dataset[1];
-      $used_ds = $dataset[2];
-      $used_snap = $dataset[3];
-      $result[$name] = array(
-        'used_ds' => array(
-          'bytes' => Convert::to_bytes($used_ds),
-          'formatted' => $used_ds
-        ),
-        'used_snap' => array(
-          'bytes' => Convert::to_bytes($used_snap),
-          'formatted' => $used_snap
-        )
-      );
-    }
-    return $result;
-  }
+//   public static function usage() {
+//     $cmd = 'sysctl -n hw.usermem';
+//     $result = Shell::exec($cmd);
+//     return Convert::from_bytes($result);
+//   }
 
-  public static function disk_info() {
-    $result = array();
-    foreach(self::$disk_count as $key => $value) {
-      // $cmd = 'diskinfo -v /dev/' . $value . ' | tail -n +2';
-      $cmd = 'smartctl -i /dev/' . $value . ' | egrep \'Family|Capacity|Rotation\' | cut -d : -f2';
-      $results = explode("\n" , Shell::exec($cmd));
-      preg_match("/\[(.*?)\]/", $results[1], $size);
-      $result[$value] = trim($results[0]) . ' ' . $size[1] . ' ' . trim($results[2]);
-    }
-    return $result;
-  }
-
-  public static function interface_name() {
-    $cmd = 'sysctl -n dev.ahci.0.%desc';
-    return Shell::exec($cmd);
-  }
-
-  public static function io_stats() {
-    // diskinfo -tv /dev/ada0 is really cool but takes a long time (benchmark)
-    // possibly -I 1 (to get stats within time period)
-    // zpool iostat tank 1 2 // this is in continuous interval
-    // $cmd = 'iostat -x -n 7';
-		$cmd = 'zpool iostat tank 1 2 | tail -1';
-		// this returns more than one space between properties
-		$result = preg_replace('/\h+/', ' ', Shell::exec($cmd));
-		// now turn that into an array
-    $result = explode(' ', $result);
-    $result = array(
-      // 'pool_name' => $result[0],
-      // 'alloc' => $result[1],
-      // 'free' => $result[2],
-      'bw' => array(
-        'bytes_out' => Convert::to_bytes($result[5]),
-        'bytes_in' => Convert::to_bytes($result[6]),
-        'formatted_out' => $result[5],
-        'formatted_in' => $result[6]
-      ),
-      'io' => array(
-        'out' => $result[3],
-        'in' => $result[4]
-      )
-    );
-    return $result;
-	}
-	
-	public static function io_stats_per_device() {
-		$cmd = 'iostat -x -d -n 7 -o -c 2 | tail -6';
-		// $result = preg_split('/extended device statistics/', Shell::exec($cmd));
-		$result = preg_replace('/\h+/', ' ', Shell::exec($cmd));
-		$result = explode('/[\n\t\r]+/', $result);
-		return $result;
-	}
-
-  public static function pool_total() {
-    $cmd = 'zpool list -o name,size | tail -1';
-    $pool_total = explode(' ', Shell::exec($cmd))[2];
-    return array(
-      'bytes' => Convert::to_bytes($pool_total),
-      'formatted' => $pool_total
-    );
-  }
-  // requires root
-  public static function temperature() {
-    $result = array();
-    foreach(self::$disk_count as $key => $value) {
-      $cmd = 'smartctl -A /dev/' . $value . ' | awk \'/Temperature_Celsius/{print $0}\' | awk \'{print $10}\'';
-      $result[$value] = Shell::exec($cmd);
-    }
-    return $result;
-  }
-
-}
-
-class Memory {
-
-  public static function current_usage() {
-    $cmd = 'top -btIquz | tail -n +4 | head -2 | cut -d : -f2';
-    $result = Shell::exec($cmd);
-    $result = preg_replace("/\n\s/", ', ', $result);
-    $result = explode(', ', $result);
-    $results = array();
-    foreach($result as $k => $v) {
-      $values = explode(' ', $v);
-      if ($values[1] !== 'Total') {
-        $results[] = array(
-          'title' => $values[1],
-          'bytes' => Convert::to_bytes($values[0]),
-          'formatted' => $values[0]
-        );
-      }
-    }
-    return $results;
-  }
-
-  public static function total() {
-    $cmd = 'sysctl -n hw.physmem';
-    $result = Shell::exec($cmd);
-    return Convert::from_bytes($result);
-  }
-
-  public static function usage() {
-    $cmd = 'sysctl -n hw.usermem';
-    $result = Shell::exec($cmd);
-    return Convert::from_bytes($result);
-  }
-
-}
+// }
 
 class Network {
 
@@ -373,15 +270,15 @@ class System {
   }
 
   public static function kernel_version() {
+		// why not just use uname -r
     $kernel = explode(' ', file_get_contents('/proc/version'));
-    $kernel = $kernel[2];
-    return $kernel;
+    return $kernel[2];
   }
 
+	// requires root
   public static function motherboard() {
     $cmd = 'dmidecode -qt baseboard | egrep \'Manufacturer|Product\' | cut -d : -f2';
-    $result = preg_replace("/\s+/", ' ', Shell::exec($cmd));
-    return $result;
+    return preg_replace("/\s+/", ' ', Shell::exec($cmd));
   }
 
   public static function os() {
@@ -481,7 +378,7 @@ class GenerateData {
 
   public function __construct($type) {
     // Cpu::cores();
-    Disk::count();
+    // Disk::count();
     switch ($type) {
       case 'init':
         self::initial();
@@ -504,9 +401,9 @@ class GenerateData {
       // 'cpu_model' => Cpu::model(),
       // 'cpu_temps' => Cpu::temperature(),
       // 'cpu_tj_max' => Cpu::tj_max(),
-      'dataset_usage' => Disk::dataset_usage(),
+      // 'dataset_usage' => Disk::dataset_usage(),
       // 'disk_info' => Disk::disk_info(),
-      'disk_interface' => Disk::interface_name(),
+      // 'disk_interface' => Disk::interface_name(),
       'hostname' => System::hostname(),
       // 'kernel_version' => System::kernel_version(),
       'motherboard' => System::motherboard(),
@@ -530,26 +427,26 @@ class GenerateData {
       // 'cpu_temps' => Cpu::temperature(),
       'process_count' => System::process_count(),
       'top_processes' => System::top_processes(),
-      'disk_io_stats' => Disk::io_stats(),
+      // 'disk_io_stats' => Disk::io_stats(),
 			'txrx_current' => Network::txrx_current(),
-			'disk_io_stats_per_device' => Disk::io_stats_per_device()
+			// 'disk_io_stats_per_device' => Disk::io_stats_per_device()
     ));
   }
 
   private static function disk_poll() {
     echo json_encode(array(
-      'dataset_usage' => Disk::dataset_usage(),
-      'disk_info' => Disk::disk_info(),
-      'disk_pool_total' => Disk::pool_total(),
-      'disk_temps' => Disk::temperature(),
+      // 'dataset_usage' => Disk::dataset_usage(),
+      // 'disk_info' => Disk::disk_info(),
+      // 'disk_pool_total' => Disk::pool_total(),
+      // 'disk_temps' => Disk::temperature(),
       'ups_stats' => System::ups_stats()
     ));
   }
 
   private static function memory_poll() {
     echo json_encode(array(
-      'memory_usage' => Memory::current_usage(),
-      'memory_total' => Memory::total()
+      // 'memory_usage' => Memory::current_usage(),
+      // 'memory_total' => Memory::total()
       // 'memory_total_usage' => Memory::usage()
     ));
   }

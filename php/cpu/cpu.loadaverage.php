@@ -4,7 +4,6 @@ require_once 'cpu.php';
 class LoadAverage extends Cpu {
 	
 	public function __construct() {
-		// parent->__construct();
 		echo json_encode(array(
 			'clock' => $this->frequency(),
 			'data' => $this->load_average()

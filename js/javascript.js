@@ -23,16 +23,46 @@ var colors = ['#5cbbe6', '#b6d957', '#fac364', '#8cd3ff', '#da98cb',
 var colorsAlpha = ['rgba(92,187,230,.2)', 'rgba(182,217,87,.2)', 'rgba(250,195,100,.2)', 'rgba(140,211,255,.2)', 'rgba(218,152,203,.2)',
 	'rgba(242,210,73,.2)', 'rgba(146,185,198,.2)', 'rgba(204,197,168,.2)', 'rgba(82,186,204,.2)', 'rgba(220,219,70,.2)', 'rgba(152,170,251,.2)'];
 
+(function(undefined) {
+
+	const BYTES = {
+		B: 1,
+		KB: 1024,
+		MB: 1048576,
+		GB: 1073741824,
+		TB: 1099511627776
+	};
+
+	window.Convert = {
+
+		fromBytes: function(data) {
+			if (data >= BYTES.TB) {
+				return result = Math.ceil((data / BYTES.TB).toFixed(2) * 100) / 100 + ' TB';
+			} else if (data >= BYTES.GB) {
+				return result = Math.ceil((data / BYTES.GB).toFixed(2) * 10) / 10 + ' GB';
+			} else if (data >= BYTES.MB) {
+				return result = Math.ceil((data / BYTES.MB).toFixed(2) * 2) / 2 + ' MB';
+			} else if (data >= BYTES.KB) {
+				return result = Math.round((data / BYTES.KB).toFixed(2) * 2) / 2 + ' KB';
+			} else {
+				return result = data + ' B';
+			}
+		}
+
+	}
+
+}());
+
 var ChartModule = (function() {
 
 	var length = 20;
 
 	const BYTES = {
-		'B': 1,
-		'KB': 1024,
-		'MB': 1048576,
-		'GB': 1073741824,
-		'TB': 1099511627776
+		B: 1,
+		KB: 1024,
+		MB: 1048576,
+		GB: 1073741824,
+		TB: 1099511627776
 	};
 
 	return {
@@ -245,7 +275,7 @@ var ChartModule = (function() {
 	};
 
 	function update() {
-		Xhr.request({ url: 'php/cpu/loadaverage.php' })
+		Xhr.request({ url: 'php/cpu/cpu.loadaverage.php' })
 			.then(r => {
 				document.querySelector('[data-name="cpu-load-average"]').textContent = r['clock'];
 				chart.config.data.datasets.forEach((v, i) => {
@@ -310,6 +340,9 @@ var ChartModule = (function() {
 				streaming: {
 					frameRate: 30
 				}
+			},
+			tooltips: {
+				mode: 'index'
 			}
 		}
 	};
@@ -326,14 +359,14 @@ var ChartModule = (function() {
 	let chart;
 
 	function init() {
-		let ctx = document.getElementById('cpu-temps-chart').getContext('2d');
+		let ctx = document.getElementById('cpu-temperature-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
 		setInterval(() => update(), 5000);
 	};
 
 	function update() {
-		Xhr.request({ url: 'php/cpu/temperature.php' })
+		Xhr.request({ url: 'php/cpu/cpu.temperature.php' })
 			.then(r => {
 				// chart.data.datasets[0].labels = r['data'].reduce((a, b, i) => a.push('CPU ' + i), []);
 				chart.data.datasets[0].data = r['data'];
@@ -366,7 +399,16 @@ var ChartModule = (function() {
 				}]
 			},
 			tooltips: {
-				// callbacks: ChartModule.tooltip.temp(this)
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let currentValue = dataset.data[tooltipItem.index];
+						return currentValue + " \u2103";
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				}
 			}
 		}
 	};
@@ -389,14 +431,16 @@ var ChartModule = (function() {
 	}
 
 	function update() {
-		Xhr.request({ url: 'php/disk/bandwidth.php' })
+		Xhr.request({ url: 'php/disk/disk.bandwidth.php' })
 			.then(r => {
-				// document.querySelector('[data-name="cpu-load-average"]').textContent = r['clock'];
-				chart.config.data.datasets.forEach((v, i) => {
-					v.data.push({
-						x: Date.now(),
-						y: r['data'][i]
-					});
+				let data = chart.config.data;
+				data.datasets[0].data.push({
+					x: Date.now(),
+					y: r.data.bytes_out
+				});
+				data.datasets[1].data.push({
+					x: Date.now(),
+					y: r.data.bytes_in
 				});
 				chart.update({ preservation: true });
 			})
@@ -438,7 +482,8 @@ var ChartModule = (function() {
 				}],
 				yAxes: [{
 					ticks: {
-						beginAtZero: true
+						beginAtZero: true,
+						callback: Convert.fromBytes
 					}
 				}]
 			},
@@ -446,165 +491,209 @@ var ChartModule = (function() {
 				streaming: {
 					frameRate: 30
 				}
+			},
+			tooltips: {
+				mode: 'index',
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
+						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					}
+				}
 			}
 		}
-	}
+	};
+
+	init();
 
 }());
-var Disk = {
 
-	bandwidth: {
+/**
+ * Disk temperature chart
+ */
+(function(undefined) {
 
-		dataPoints: [],
-		tooltipText_in: [],
-		tooltipText_out: [],
+	let chart;
 
-		init: function(r) {
-			this.dataPoints = r['bw'];
-			this.tooltipText_in.push(this.dataPoints['formatted_in']);
-			this.tooltipText_out.push(this.dataPoints['formatted_out']);
-			this.chart = ChartModule.init.call(this, 'disk-bandwidth', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
-			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticks.bytes();
-			this.chart.update();
-			// this.diskIO.init(r['io']);
-		},
-
-		data: function() {
-			return {
-				datasets: [
-					{
-						label: 'Write',
-						data: [this.dataPoints['bytes_in']],
-						backgroundColor: 'rgba(218, 152, 203, .2)',
-						borderColor: '#da98cb',
-						pointBorderColor: '#da98cb',
-						pointHoverBorderColor: '#da98cb'
-					},
-					{
-						label: 'Read',
-						data: [this.dataPoints['bytes_out']],
-						backgroundColor: 'rgba(140, 211, 255, .2)',
-						borderColor: '#8cd3ff',
-						pointBorderColor: '#8cd3ff',
-						pointHoverBorderColor: '#8cd3ff'
-					}
-				]
-			};
-		},
-
-		options: function() {
-			return ChartModule.options.line();
-		}
-
-	},
-
-	io: {
-
-		init: function(r) {
-
-		}
-
-	},
-
-	temp: {
-
-		labels: [],
-		dataPoints: [],
-		tooltipText: [],
-
-		init: function(r, tt) {
-			for (let key in r) {
-				this.labels.push(key);
-				this.dataPoints.push(r[key]);
-				this.tooltipText.push(tt[key]);
-			}
-			this.chart = ChartModule.init.call(this, 'disk-temps', 'horizontalBar');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltip.temp(this);
-			this.chart.options.scales.xAxes[0].ticks.min = 20;
-			this.chart.options.scales.xAxes[0].ticks.max = 50;
-			this.chart.update();
-		},
-
-		data: function() {
-			return {
-				labels: this.labels,
-				datasets: [{
-					data: this.dataPoints,
-					backgroundColor: colors
-				}]
-			};
-		},
-
-		options: function() {
-			return ChartModule.options.horizontalbar();
-		}
-
-	},
-
-	usage: {
-
-		labels: [],
-		dataPoints: [],
-		tooltipText: [],
-
-		init: function(r) {
-			for (let key in r) {
-				this.labels.push(key);
-				this.dataPoints.push(r[key]['used_ds']['bytes']);
-				this.tooltipText.push(r[key]['used_ds']['formatted']);
-			}
-			this.chart = ChartModule.init.call(this, 'disk-usage', 'pie');
-			App.switchViews.call(this, this.snapshotUsage, 'disk-usage', 'Dataset Usage', 'Snapshot Usage');
-			this.snapshotUsage.init(r);
-		},
-
-		data: function() {
-			return {
-				labels: this.labels,
-				datasets: [{
-					data: this.dataPoints,
-					backgroundColor: colors
-				}]
-			};
-		},
-
-		options: function() {
-			return {
-				animation: {
-					animateRotate: true
-				},
-				tooltips: {
-					callbacks: this.tooltipCallback()
-				}
-			};
-		},
-
-		tooltipCallback: function() {
-			return ChartModule.tooltip.percent(this);
-		},
-
-		snapshotUsage: {
-
-			dataPoints: [],
-			tooltipText: [],
-
-			init: function(r) {
-				for (let key in r) {
-					this.dataPoints.push(r[key]['used_snap']['bytes']);
-					this.tooltipText.push(r[key]['used_snap']['formatted']);
-				}
-			},
-
-			tooltipCallback: function() {
-				return ChartModule.tooltip.percent(this);
-			}
-
-		}
-
+	function init() {
+		let ctx = document.getElementById('disk-temperature-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+		setInterval(() => update(), 5000);
 	}
 
-};
+	function update() {
+		Xhr.request({ url: 'php/disk/disk.temperature.php' })
+			.then(r => {
+				chart.data.datasets[0].data = r['data'];
+				chart.update();
+			})
+			.catch(e => console.error(e));
+	}
+
+	let config = {
+		type: 'horizontalBar',
+		data: {
+			labels: ['da0', 'ada0', 'ada1', 'ada2', 'ada3', 'ada4', 'ada5'],
+			datasets: [{
+				data: [],
+				backgroundColor: colors
+			}]
+		},
+		options: {
+			legend: {
+				display: false
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						beginAtZero: false,
+						min: 20,
+						max: 50
+					}
+				}]
+			},
+			tooltips: {
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let currentValue = dataset.data[tooltipItem.index];
+						return currentValue + " \u2103";
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
+ * Disk usage chart
+ */
+(function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('disk-usage-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+		// setInterval(() => update(), 5000);
+	}
+
+	function update() {
+		Xhr.request({ url: 'php/disk/disk.usage.php' })
+			.then(r => {
+				document.querySelector('[data-name="disk-usage"]').textContent = r['total'];
+				for (let key in r.data) {
+					chart.data.labels.push(key);
+					chart.data.datasets[0].data.push(r.data[key].used_ds)
+				}
+				// chart.data.datasets[0].data = r.data.used_ds;
+				chart.update();
+			})
+			.catch(e => console.error(e));
+	}
+
+	let config = {
+		type: 'pie',
+		data: {
+			labels: [],
+			datasets: [{
+				data: [],
+				backgroundColor: colors
+			}]
+		},
+		options: {
+			animation: {
+				animateRotate: true
+			},
+			tooltips: {
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let total = dataset.data.reduce((pre, cur) => pre + cur);
+						let currentValue = dataset.data[tooltipItem.index];
+						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
+						return `${Convert.fromBytes(currentValue)} ${percentage}%`;
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
+ * Memory usage chart
+ */
+(function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('memory-usage-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+		// setInterval(() => update(), 10000);
+	}
+
+	function update() {
+		Xhr.request({ url: 'php/memory/memory.usage.php'})
+			.then(r => {
+				document.querySelector('[data-name="memory-usage"]').textContent = Convert.fromBytes(r.total);
+				for (let key in r.data) {
+					chart.data.labels.push(key);
+					chart.data.datasets[0].data.push(r.data[key].bytes)
+				}
+				chart.update();
+			})
+			.catch(e => console.error(e))
+	}
+
+	let config = {
+		type: 'pie',
+		data: {
+			labels: [],
+			datasets: [{
+				data: [],
+				backgroundColor: colors
+			}]
+		},
+		options: {
+			animation: {
+				animateRotate: true
+			},
+			tooltips: {
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let total = dataset.data.reduce((pre, cur) => pre + cur);
+						let currentValue = dataset.data[tooltipItem.index];
+						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
+						return `${Convert.fromBytes(currentValue)} ${percentage}%`;
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
 
 var Memory = {
 
@@ -804,7 +893,7 @@ var Table = {
 		let el = document.getElementById(element);
 		this.clearPalette(el);
 		let table = document.createElement('table');
-		table.classList.add('vertical');
+		table.classList.add('vertical', 'slds-table');
 		let count = 0;
 		fields.forEach(fieldValue => {
 			let dataInsert = callback(fieldValue, response);
@@ -825,7 +914,7 @@ var Table = {
 		let el = document.getElementById(element);
 		this.clearPalette(el);
 		let table = document.createElement('table');
-		table.classList.add('horizontal');
+		table.classList.add('horizontal', 'slds-table');
 		let df = document.createDocumentFragment();
 		// Create the table head
 		let tr_thead = document.createElement('tr');
@@ -893,14 +982,14 @@ var App = {
 	modulesInit: function(r, type) {
 		switch (type) {
 			case 'disk':
-				Disk.temp.init(r['disk_temps'], r['disk_info']);
+				// Disk.temp.init(r['disk_temps'], r['disk_info']);
 				Ups.info.init(r['ups_stats']);
 				break;
 			case 'mem':
-				Memory.usage.init(r['memory_usage'], r['memory_total']);
+				// Memory.usage.init(r['memory_usage'], r['memory_total']);
 				break;
 			case 'poll':
-				Disk.bandwidth.init(r['disk_io_stats']);
+				// Disk.bandwidth.init(r['disk_io_stats']);
 				Network.bandwidth.init(r['txrx_current']);
 				break;
 			case 'init':
@@ -908,7 +997,7 @@ var App = {
 				System.processes.init(r['top_processes'], r['process_count']);
 				// Cpu.loadAverage.init(r['cpu_load_average'], r['cpu_frequency']);
 				// Cpu.temp.init(r['cpu_temps']);
-				Disk.usage.init(r['dataset_usage']);
+				// Disk.usage.init(r['dataset_usage']);
 		}
 	},
 
@@ -920,11 +1009,11 @@ var App = {
 				ChartModule.updateDataObject(Ups.info, r['ups_stats'], this.currentTime());
 				break;
 			case 'mem':
-				ChartModule.replaceDataArray(Memory.usage, r['memory_usage'], true);
+				// ChartModule.replaceDataArray(Memory.usage, r['memory_usage'], true);
 				// Memory.usage.update(r['memory_usage']);
 				break;
 			case 'poll':
-				ChartModule.updateDataObject(Disk.bandwidth, r['disk_io_stats']['bw'], this.currentTime());
+				// ChartModule.updateDataObject(Disk.bandwidth, r['disk_io_stats']['bw'], this.currentTime());
 				ChartModule.updateDataObject(Network.bandwidth, r['txrx_current']['all'], this.currentTime());
 				System.processes.init(r['top_processes'], r['process_count']);
 			// ChartModule.updateDataPoint(Cpu.loadAverage, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);

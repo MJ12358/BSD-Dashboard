@@ -8,108 +8,120 @@
 	<!-- <link rel="preload" as="image" href="/img/loader.svg"/> -->
 	<link rel="icon" href="/img/dashboard-32x32.png" />
 	<link rel="stylesheet" type="text/css" href="css/styles.css" />
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/js/bootstrap/bootstrap.min.css" /> -->
 </head>
 
 <body>
-	<div class="wrapper">
+	<div class="container-fluid row wrapper">
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>System Info</div>
-			</div>
-			<div id="system-specs" class="container__table"></div>
-		</div>
+		<!-- <nav id="sidebar" class="nav flex-column nav-pills">
+			<h3>Dashboard</h3>
+			<a class="nav-link active" data-toggle="pill">CPU</a>
+			<a class="nav-link" data-toggle="pill">Disk</a>
+		</nav> -->
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>Top Processes</div>
-				<div class="container__info" data-name="top-processes"></div>
-			</div>
-			<div id="top-processes" class="container__table"></div>
-		</div>
+		<!-- <main id="content"> -->
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>CPU Load Average</div>
-				<div class="container__info" data-name="cpu-load-average"></div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>System Info</div>
+				</div>
+				<div id="system-specs" class="container__table"></div>
 			</div>
-			<div class="container__chart">
-				<canvas id="cpu-load-average-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>CPU Temps</div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>Top Processes</div>
+					<div class="container__info" data-name="top-processes"></div>
+				</div>
+				<div id="top-processes" class="container__table"></div>
 			</div>
-			<div class="container__chart">
-				<canvas id="cpu-temps-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>Memory Usage</div>
-				<div class="container__info" data-name="memory-usage"></div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>CPU Load Average</div>
+					<div class="container__info" data-name="cpu-load-average"></div>
+				</div>
+				<div class="container__chart">
+					<canvas id="cpu-load-average-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="memory-usage-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div id="disk-bandwidth-header">Disk Bandwidth</div>
-				<div class="button container__info" data-name="disk-bandwidth">Switch</div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>CPU Temps</div>
+				</div>
+				<div class="container__chart">
+					<canvas id="cpu-temperature-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="disk-bandwidth-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>Disk Temps</div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>Memory Usage</div>
+					<div class="container__info" data-name="memory-usage"></div>
+				</div>
+				<div class="container__chart">
+					<canvas id="memory-usage-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="disk-temps-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div id="disk-usage-header">Dataset Usage</div>
-				<div class="button container__info" data-name="disk-usage">Switch</div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div id="disk-bandwidth-header">Disk Bandwidth</div>
+					<div class="button container__info" data-name="disk-bandwidth">Switch</div>
+				</div>
+				<div class="container__chart">
+					<canvas id="disk-bandwidth-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="disk-usage-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>Network Usage</div>
-				<div class="button container__info" data-name="txrx-current"></div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>Disk Temps</div>
+				</div>
+				<div class="container__chart">
+					<canvas id="disk-temperature-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="txrx-current-chart"></canvas>
-			</div>
-		</div>
 
-		<div class="container box-shadow fade-in">
-			<div class="container__header">
-				<div>UPS Stats</div>
-				<div class="container__info" data-name="ups-info"></div>
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div id="disk-usage-header">Dataset Usage</div>
+					<div class="button container__info" data-name="disk-usage"></div>
+				</div>
+				<div class="container__chart">
+					<canvas id="disk-usage-chart"></canvas>
+				</div>
 			</div>
-			<div class="container__chart">
-				<canvas id="ups-info-chart"></canvas>
+
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>Network Usage</div>
+					<div class="button container__info" data-name="txrx-current"></div>
+				</div>
+				<div class="container__chart">
+					<canvas id="txrx-current-chart"></canvas>
+				</div>
 			</div>
-		</div>
+
+			<div class="container box-shadow fade-in">
+				<div class="container__header">
+					<div>UPS Stats</div>
+					<div class="container__info" data-name="ups-info"></div>
+				</div>
+				<div class="container__chart">
+					<canvas id="ups-info-chart"></canvas>
+				</div>
+			</div>
 
 	</div>
 
+	<!-- </main> -->
+
 </body>
 
+<!-- <script type="text/javascript" src="/lib/js/bootstrap/bootstrap.min.js"></script> -->
 <script type="text/javascript" src="/lib/js/moment/moment.min.js"></script>
 <script type="text/javascript" src="/lib/js/chartjs/Chart.min.js"></script>
 <script type="text/javascript" src="/lib/js/chartjs/chartjs-plugin-streaming.min.js"></script>
