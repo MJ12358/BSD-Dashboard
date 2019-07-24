@@ -4,7 +4,7 @@ require_once 'memory.php';
 class MemoryUsage extends Memory {
 
 	public function __construct() {
-		parent::__construct();
+		// parent::__construct();
 		echo json_encode(array(
 			'data' => $this->getCurrentUsage(),
 			'total' => $this->getTotal()

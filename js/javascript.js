@@ -433,6 +433,7 @@ var ChartModule = (function() {
 	function update() {
 		Xhr.request({ url: 'php/disk/disk.bandwidth.php' })
 			.then(r => {
+				document.querySelector('[data-name="disk-bandwidth"]').textContent = Convert.fromBytes(r.total);
 				let data = chart.config.data;
 				data.datasets[0].data.push({
 					x: Date.now(),
@@ -583,18 +584,19 @@ var ChartModule = (function() {
 		let ctx = document.getElementById('disk-usage-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
-		// setInterval(() => update(), 5000);
+		setInterval(() => update(), 60000);
 	}
 
 	function update() {
 		Xhr.request({ url: 'php/disk/disk.usage.php' })
 			.then(r => {
-				document.querySelector('[data-name="disk-usage"]').textContent = r['total'];
+				document.querySelector('[data-name="disk-usage"]').textContent = r.total;
 				for (let key in r.data) {
 					chart.data.labels.push(key);
 					chart.data.datasets[0].data.push(r.data[key].used_ds)
 				}
-				// chart.data.datasets[0].data = r.data.used_ds;
+				chart.data.labels.length = Object.keys(r.data).length;
+				chart.data.datasets[0].data.length = Object.keys(r.data).length;
 				chart.update();
 			})
 			.catch(e => console.error(e));
@@ -645,7 +647,7 @@ var ChartModule = (function() {
 		let ctx = document.getElementById('memory-usage-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
-		// setInterval(() => update(), 10000);
+		setInterval(() => update(), 60000);
 	}
 
 	function update() {
@@ -656,6 +658,9 @@ var ChartModule = (function() {
 					chart.data.labels.push(key);
 					chart.data.datasets[0].data.push(r.data[key].bytes)
 				}
+				// this keeps the first half of the array !!!!!!!!!!!!
+				chart.data.labels.length = Object.keys(r.data).length;
+				chart.data.datasets[0].data.length = Object.keys(r.data).length;
 				chart.update();
 			})
 			.catch(e => console.error(e))
@@ -695,89 +700,182 @@ var ChartModule = (function() {
 
 }());
 
-var Memory = {
+/**
+ * Network bandwidth chart
+ */
+(function(undefined) {
 
-	usage: {
+	let chart;
 
-		init: function(r, aux) {
-			ChartModule.replaceDataArray(this, r);
-			this.chart = ChartModule.init.call(this, 'memory-usage', 'pie');
-			this.button.textContent = aux;
-		},
+	function init() {
+		let ctx = document.getElementById('network-bandwidth-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+	}
 
-		data: function() {
-			return {
-				labels: this.labels,
-				datasets: [{
-					data: this.dataPoints,
-					backgroundColor: colors
-				}]
-			};
-		},
+	function update() {
+		Xhr.request({ url: 'php/network/network.bandwidth.php' })
+			.then(r => {
+				document.querySelector('[data-name="network-bandwidth"]').textContent = Convert.fromBytes(r.total);
+				let data = chart.config.data;
+				data.datasets[0].data.push({
+					x: Date.now(),
+					y: r.data.bytes_out
+				});
+				data.datasets[1].data.push({
+					x: Date.now(),
+					y: r.data.bytes_in
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	}
 
-		options: function() {
-			return {
-				animation: {
-					animateRotate: true
+	let config = {
+		type: 'line',
+		data: {
+			datasets: [
+				{
+					label: 'In',
+					data: [],
+					backgroundColor: colorsAlpha[0],
+					borderColor: colors[0],
+					pointBorderColor: colors[0],
+					pointHoverBorderColor: colors[0]
 				},
-				tooltips: {
-					callbacks: ChartModule.tooltip.percent(this)
+				{
+					label: 'Out',
+					data: [],
+					backgroundColor: colorsAlpha[1],
+					borderColor: colors[1],
+					pointBorderColor: colors[1],
+					pointHoverBorderColor: colors[1]
 				}
-			};
-		}
-
-	}
-
-};
-
-var Network = {
-
-	bandwidth: {
-
-		dataPoints: [],
-		tooltipText_in: [],
-		tooltipText_out: [],
-
-		init: function(r) {
-			this.dataPoints = r['all'];
-			this.tooltipText_in.push(this.dataPoints['formatted_in']);
-			this.tooltipText_out.push(this.dataPoints['formatted_out']);
-			this.chart = ChartModule.init.call(this, 'txrx-current', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
-			this.chart.options.scales.yAxes[0].ticks.callback = ChartModule.ticks.bytes();
-			this.chart.update();
+			]
 		},
-
-		data: function() {
-			return {
-				datasets: [
-					{
-						label: 'In',
-						data: [this.dataPoints['bytes_in']],
-						backgroundColor: 'rgba(220, 219, 70, .2)',
-						borderColor: '#dcdb46',
-						pointBorderColor: '#dcdb46',
-						pointHoverBorderColor: '#dcdb46'
-					},
-					{
-						label: 'Out',
-						data: [this.dataPoints['bytes_out']],
-						backgroundColor: 'rgba(152, 170, 251, .2)',
-						borderColor: '#98aafb',
-						pointBorderColor: '#98aafb',
-						pointHoverBorderColor: '#98aafb'
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 30000,
+						refresh: 5000,
+						delay: 5000,
+						onRefresh: update
 					}
-				]
-			};
-		},
-
-		options: function() {
-			return ChartModule.options.line();
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true,
+						callback: Convert.fromBytes
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index',
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
+						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					}
+				}
+			}
 		}
+	};
 
+	init();
+
+}());
+
+/**
+ * UPS usage chart
+ */
+(function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('ups-info-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
 	}
 
-};
+	function update() {
+		Xhr.request({ url: 'php/ups/ups.usage.php'})
+			.then(r => {
+				document.querySelector('[data-name="ups-info"]').textContent = r.status;
+				let data = chart.config.data;
+				data.datasets[0].data.push({
+					x: Date.now(),
+					y: r.data.input_voltage
+				});
+				data.datasets[1].data.push({
+					x: Date.now(),
+					y: r.data.battery_voltage
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	}
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: [
+				{
+					label: 'Input Voltage',
+					data: [],
+					backgroundColor: colorsAlpha[0],
+					borderColor: colors[0],
+					pointBorderColor: colors[0],
+					pointHoverBorderColor: colors[0]
+				},
+				{
+					label: 'Battery Voltage',
+					data: [],
+					backgroundColor: colorsAlpha[1],
+					borderColor: colors[1],
+					pointBorderColor: colors[1],
+					pointHoverBorderColor: colors[1]
+				}
+			]
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 30000,
+						refresh: 5000,
+						delay: 5000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index'
+			}
+		}
+	};
+
+	init();
+
+}());
 
 var System = {
 
@@ -829,54 +927,6 @@ var System = {
 			return response[fieldValue.field];
 		}
 
-	}
-
-};
-
-var Ups = {
-
-	info: {
-
-		labels: [],
-		dataPoints: [],
-		tooltipText_in: [],
-		tooltipText_out: [],
-
-		init: function(r) {
-			this.dataPoints = r;
-			this.tooltipText_in.push(r['input_voltage']['actual']);
-			this.tooltipText_out.push(r['battery_voltage']['actual']);
-			this.chart = ChartModule.init.call(this, 'ups-info', 'line');
-			this.chart.options.tooltips.callbacks = ChartModule.tooltip.dual(this);
-			this.chart.update();
-		},
-
-		data: function() {
-			return {
-				datasets: [
-					{
-						label: 'Input Voltage',
-						data: [this.dataPoints['input_voltage']['actual']],
-						backgroundColor: 'rgba(220, 219, 70, .2)',
-						borderColor: '#dcdb46',
-						pointBorderColor: '#dcdb46',
-						pointHoverBorderColor: '#dcdb46'
-					},
-					{
-						label: 'Battery Voltage',
-						data: [this.dataPoints['battery_voltage']['actual']],
-						backgroundColor: 'rgba(152, 170, 251, .2)',
-						borderColor: '#98aafb',
-						pointBorderColor: '#98aafb',
-						pointHoverBorderColor: '#98aafb'
-					}
-				]
-			}
-		},
-
-		options: function() {
-			return ChartModule.options.line();
-		}
 	}
 
 };
@@ -944,9 +994,8 @@ var Table = {
 
 var App = {
 
-	initialRequests: ['init', 'disk', 'mem', 'poll'],
+	initialRequests: ['init', 'poll'],
 	updateRequests: ['poll'],
-	longPollRequests: ['disk', 'mem'],
 
 	init: function() {
 		// The inital requests
@@ -964,60 +1013,20 @@ var App = {
 			});
 		};
 		setInterval(() => updateData(), 5000);
-		// Long Poll Requests
-		longPoll = () => {
-			this.longPollRequests.forEach(v => {
-				Xhr.request({ 'url': 'php/functions.php?type=' + v })
-					.then(r => this.modulesUpdate(r, v))
-					.catch(e => console.error(e));
-			});
-		};
-		setInterval(() => longPoll(), 60000);
-	},
-
-	currentTime: function() {
-		return new Date().toLocaleTimeString('en-US').split(' ')[0];
 	},
 
 	modulesInit: function(r, type) {
 		switch (type) {
-			case 'disk':
-				// Disk.temp.init(r['disk_temps'], r['disk_info']);
-				Ups.info.init(r['ups_stats']);
-				break;
-			case 'mem':
-				// Memory.usage.init(r['memory_usage'], r['memory_total']);
-				break;
-			case 'poll':
-				// Disk.bandwidth.init(r['disk_io_stats']);
-				Network.bandwidth.init(r['txrx_current']);
-				break;
 			case 'init':
 				System.specs.init(r);
 				System.processes.init(r['top_processes'], r['process_count']);
-				// Cpu.loadAverage.init(r['cpu_load_average'], r['cpu_frequency']);
-				// Cpu.temp.init(r['cpu_temps']);
-				// Disk.usage.init(r['dataset_usage']);
 		}
 	},
 
 	modulesUpdate: function(r, type) {
 		switch (type) {
-			case 'disk':
-				// ChartModule.replaceDataObject(Disk.temp, r['disk_temps']);
-				// Disk.usage.init(r['dataset_usage']);
-				ChartModule.updateDataObject(Ups.info, r['ups_stats'], this.currentTime());
-				break;
-			case 'mem':
-				// ChartModule.replaceDataArray(Memory.usage, r['memory_usage'], true);
-				// Memory.usage.update(r['memory_usage']);
-				break;
 			case 'poll':
-				// ChartModule.updateDataObject(Disk.bandwidth, r['disk_io_stats']['bw'], this.currentTime());
-				ChartModule.updateDataObject(Network.bandwidth, r['txrx_current']['all'], this.currentTime());
 				System.processes.init(r['top_processes'], r['process_count']);
-			// ChartModule.updateDataPoint(Cpu.loadAverage, r['cpu_load_average'], this.currentTime(), r['cpu_frequency']);
-			// ChartModule.replaceData(Cpu.temp, r['cpu_temps']);
 		}
 	},
 

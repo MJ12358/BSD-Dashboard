@@ -1,4 +1,5 @@
 <?php
+require_once '../functions.php';
 
 class Ups {
 
@@ -15,7 +16,12 @@ class Ups {
     //   'model' => $result[1]
     // );
     return $result;
-  }
+	}
+	
+	public function getStatus() {
+		$cmd = 'upsc UPS@localhost | grep ups.status | cut -d : -f2';
+		return Shell::exec($cmd);
+	}
 
 }
 

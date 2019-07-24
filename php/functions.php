@@ -149,114 +149,6 @@ class Convert {
 
 // }
 
-// class Memory {
-
-//   public static function current_usage() {
-//     $cmd = 'top -btIquz | tail -n +4 | head -2 | cut -d : -f2';
-//     $result = Shell::exec($cmd);
-//     $result = preg_replace("/\n\s/", ', ', $result);
-//     $result = explode(', ', $result);
-//     $results = array();
-//     foreach($result as $k => $v) {
-//       $values = explode(' ', $v);
-//       if ($values[1] !== 'Total') {
-//         $results[] = array(
-//           'title' => $values[1],
-//           'bytes' => Convert::to_bytes($values[0]),
-//           'formatted' => $values[0]
-//         );
-//       }
-//     }
-//     return $results;
-//   }
-
-//   public static function total() {
-//     $cmd = 'sysctl -n hw.physmem';
-//     $result = Shell::exec($cmd);
-//     return Convert::from_bytes($result);
-//   }
-
-//   public static function usage() {
-//     $cmd = 'sysctl -n hw.usermem';
-//     $result = Shell::exec($cmd);
-//     return Convert::from_bytes($result);
-//   }
-
-// }
-
-class Network {
-
-  public static $if_count;
-
-  public static function http_connections() {
-    if (function_exists('exec')) {
-      $www_total_count = 0;
-      @exec ('netstat -an | egrep \':80|:443\' | awk \'{print $5}\' | grep -v \':::\*\' |  grep -v \'0.0.0.0\'', $results);
-      foreach ($results as $key => $value) {
-        $array = explode(':', $value);
-        $www_total_count++;
-        if (preg_match('/^::/', $value)) {
-          $ipaddr = $array[3];
-        } else {
-          $ipaddr = $array[0];
-        }
-        if (!in_array($ipaddr, $unique)) {
-          $unique[] = $ipaddr;
-          $www_unique_count++;
-        }
-      }
-      unset($results);
-      return count($unique);
-    }
-  }
-
-  public static function interface_count() {
-    $cmd = 'ifconfig | grep flags | cut -d : -f1';
-    self::$if_count = explode(PHP_EOL, Shell::exec($cmd));
-    return self::$if_count;
-  }
-
-  public static function interface_name() {
-    $cmd = 'sysctl -n dev.ix.0.%desc';
-    $result = Shell::exec($cmd);
-    return trim(explode('PCI', $result)[0]);
-  }
-
-  public static function temperature() {
-    $cmd = 'sysctl -n dev.ix.0.phy.temp';
-    return Shell::exec($cmd);
-  }
-  // looping through the interfaces adds one second to rtt for each interface
-  public static function txrx_current(...$interface) {
-    $result = array();
-    $value = 'all';
-    // foreach(self::$if_count as $key => $value) {
-      $cmd = 'netstat -w 1 -q 1 -b4nW | tail -1';
-      // $cmd = 'netstat -I ' . $value . ' -w 1 -q 1 -b4nW | tail -1';
-      $stats = preg_split('/\s+/', Shell::exec($cmd));
-      $bytes_in = $stats[3];
-      $bytes_out = $stats[6];
-      $result[$value] = array(
-        'bytes_in' => $bytes_in,
-        'bytes_out' => $bytes_out,
-        'formatted_in' => Convert::from_bytes($bytes_in),
-        'formatted_out' => Convert::from_bytes($bytes_out)
-      );
-    // }
-    return $result;
-  }
-
-  public static function tx_rx_total() {
-    $tx_rx = array();
-    $tx = 'sysctl -n dev.ix.0.queue0.tx_packets';
-    $tx_rx[] = Shell::exec($tx);
-    $rx = 'sysctl -n dev.ix.0.queue0.rx_packets';
-    $tx_rx[] = Shell::exec($rx);
-    return $tx_rx;
-  }
-
-}
-
 class System {
   // requires root
   public static function bios_version() {
@@ -327,34 +219,6 @@ class System {
     return $uname[0] . ' ' . $uname[2];
   }
 
-  public static function ups_info() {
-    $cmd = 'upsc UPS@localhost | egrep \'device.mfr:|device.model:\' | cut -d : -f2';
-    $result = Shell::exec($cmd);
-    $result = preg_replace("/\s+/", ' ', $result);
-    // $results = array(
-    //   'mfr' => $result[0],
-    //   'model' => $result[1]
-    // );
-    return $result;
-  }
-
-  public static function ups_stats() {
-    $cmd = 'upsc UPS@localhost | egrep \'input.voltage:|battery.voltage:\' | cut -d : -f2';
-    $result = Shell::exec($cmd);
-    $result = explode(PHP_EOL, $result);
-    $results = array(
-      'battery_voltage' => array(
-        'actual' => $result[0],
-        'formatted' => round(log($result[0], 2), 3)
-      ),
-      'input_voltage' => array(
-        'actual' => $result[1],
-        'formatted' => round(log($result[1], 2), 3)
-      )
-    );
-    return $results;
-  }
-
 	// yeah this is super inaccurate...
   public static function uptime() {
     $cmd = 'sysctl -n kern.boottime';
@@ -407,8 +271,8 @@ class GenerateData {
       'hostname' => System::hostname(),
       // 'kernel_version' => System::kernel_version(),
       'motherboard' => System::motherboard(),
-      'network_if_count' => Network::interface_count(),
-      'network_interface' => Network::interface_name(),
+      // 'network_if_count' => Network::interface_count(),
+      // 'network_interface' => Network::interface_name(),
       'os' => System::os(),
       'platform_os' => System::uname(),
       'process_count' => System::process_count(),
@@ -416,7 +280,7 @@ class GenerateData {
       'system_bios' => System::bios_version(),
       'system_uptime' => System::uptime(),
       'usb_interface' => Usb::interface_name(),
-      'ups_info' => System::ups_info()
+      // 'ups_info' => System::ups_info()
     ));
   }
 
@@ -428,26 +292,8 @@ class GenerateData {
       'process_count' => System::process_count(),
       'top_processes' => System::top_processes(),
       // 'disk_io_stats' => Disk::io_stats(),
-			'txrx_current' => Network::txrx_current(),
+			// 'txrx_current' => Network::txrx_current(),
 			// 'disk_io_stats_per_device' => Disk::io_stats_per_device()
-    ));
-  }
-
-  private static function disk_poll() {
-    echo json_encode(array(
-      // 'dataset_usage' => Disk::dataset_usage(),
-      // 'disk_info' => Disk::disk_info(),
-      // 'disk_pool_total' => Disk::pool_total(),
-      // 'disk_temps' => Disk::temperature(),
-      'ups_stats' => System::ups_stats()
-    ));
-  }
-
-  private static function memory_poll() {
-    echo json_encode(array(
-      // 'memory_usage' => Memory::current_usage(),
-      // 'memory_total' => Memory::total()
-      // 'memory_total_usage' => Memory::usage()
     ));
   }
 

@@ -10,12 +10,12 @@ class Memory {
 		// $this->mem_total = $this->getTotal();
 	}
 
-  public function getTotal() {
+  protected function getTotal() {
     $cmd = 'sysctl -n hw.physmem';
     return Shell::exec($cmd);
   }
 
-  public function getUsage() {
+  protected function getUsage() {
     $cmd = 'sysctl -n hw.usermem';
     return Shell::exec($cmd);
   }
