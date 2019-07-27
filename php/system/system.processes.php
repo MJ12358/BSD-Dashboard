@@ -1,10 +1,13 @@
 <?php
 require_once 'system.php';
 
-class Usage extends System {
+class SystemProcesses extends System {
 
 	public function __construct() {
-
+		echo json_encode(array(
+			'data' => $this->getTopProcesses(),
+			'total' => $this->getProcessCount()
+		));
 	}
 
   public function getProcessCount() {
@@ -29,13 +32,13 @@ class Usage extends System {
     foreach($result as $key => $value) {
       $value = preg_split('/\s+/', $value);
       $results[] = array(
-        'user' => $value[0],
-        'pid' => $value[1],
-        'time' => $value[2],
-        'nlwp' => $value[3],
-        'pcpu' => $value[4],
-        'pmem' => $value[5],
-        'comm' => $value[6]
+        'User' => $value[0],
+        // 'pid' => $value[1],
+        'Time' => $value[2],
+        'TC' => $value[3],
+        'CPU' => $value[4],
+        'Mem' => $value[5],
+        'CMD' => $value[6]
         // 'dsiz' => Convert::from_bytes($value[7])
         // 'etimes' => Convert::from_seconds($value[7])
       );
@@ -45,6 +48,6 @@ class Usage extends System {
 
 }
 
-$system_usage = new Usage();
+$system_processes = new SystemProcesses();
 
 ?>

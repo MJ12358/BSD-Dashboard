@@ -1,6 +1,7 @@
 // TODO: disk io chart
 // TODO: per cpu utilization
 // TODO: memory usage per process
+// TODO: global adjust of framerate, frequency, duration
 Chart.defaults.global.responsive = true;
 Chart.defaults.global.maintainAspectRatio = false;
 Chart.defaults.global.tooltips.intersect = false;
@@ -23,7 +24,7 @@ var colors = ['#5cbbe6', '#b6d957', '#fac364', '#8cd3ff', '#da98cb',
 var colorsAlpha = ['rgba(92,187,230,.2)', 'rgba(182,217,87,.2)', 'rgba(250,195,100,.2)', 'rgba(140,211,255,.2)', 'rgba(218,152,203,.2)',
 	'rgba(242,210,73,.2)', 'rgba(146,185,198,.2)', 'rgba(204,197,168,.2)', 'rgba(82,186,204,.2)', 'rgba(220,219,70,.2)', 'rgba(152,170,251,.2)'];
 
-(function(undefined) {
+var Convert = (function(undefined) {
 
 	const BYTES = {
 		B: 1,
@@ -33,7 +34,7 @@ var colorsAlpha = ['rgba(92,187,230,.2)', 'rgba(182,217,87,.2)', 'rgba(250,195,1
 		TB: 1099511627776
 	};
 
-	window.Convert = {
+	return {
 
 		fromBytes: function(data) {
 			if (data >= BYTES.TB) {
@@ -49,111 +50,30 @@ var colorsAlpha = ['rgba(92,187,230,.2)', 'rgba(182,217,87,.2)', 'rgba(250,195,1
 			}
 		}
 
-	}
+	};
 
 }());
 
-var ChartModule = (function() {
+var ChartModule = (function(undefined) {
 
 	var length = 20;
 
-	const BYTES = {
-		B: 1,
-		KB: 1024,
-		MB: 1048576,
-		GB: 1073741824,
-		TB: 1099511627776
-	};
+	function play(chart) {
+		chart.options.plugins.streaming.pause = false;
+		chart.update({ duration: 0 });
+	}
+
+	function pause(chart) {
+		chart.options.plugins.streaming.pause = true;
+		chart.update({ duration: 0 });
+	}
 
 	return {
 
-		init: function(ctx, type) {
-			this.button = document.querySelector('div[data-name="' + ctx + '"]');
-			this.header = document.getElementById(ctx + '-header');
-			this.span = document.getElementById(ctx + '-span');
-			ctx = document.getElementById(ctx + '-chart');
-			return new Chart(ctx, {
-				type: type,
-				data: this.data.call(this),
-				options: this.options.call(this)
-			});
-		},
-
-		options: {
-
-			horizontalbar: function() {
-				return {
-					legend: {
-						display: false
-					},
-					scales: {
-						xAxes: [{
-							ticks: {
-								beginAtZero: false
-							}
-						}]
-					}
-				};
-			},
-
-			line: function() {
-				return {
-					scales: {
-						xAxes: [{
-							ticks: {
-								display: false
-							}
-						}],
-						yAxes: [{
-							ticks: {
-								beginAtZero: true
-							}
-						}]
-					},
-					tooltips: {
-						mode: 'index'
-					}
-				};
-			}
-
-		},
-
-		ticks: {
-
-			bytes: function() {
-				return function(data) {
-					if (data >= BYTES.TB) {
-						return result = Math.ceil((data / BYTES.TB).toFixed(2) * 100) / 100 + ' TB';
-					} else if (data >= BYTES.GB) {
-						return result = Math.ceil((data / BYTES.GB).toFixed(2) * 10) / 10 + ' GB';
-					} else if (data >= BYTES.MB) {
-						return result = Math.ceil((data / BYTES.MB).toFixed(2) * 2) / 2 + ' MB';
-					} else if (data >= BYTES.KB) {
-						return result = Math.round((data / BYTES.KB).toFixed(2) * 2) / 2 + ' KB';
-					} else {
-						return result = data + ' B';
-					}
-				}
-			}
-
-		},
+		play: play,
+		pause: pause,
 
 		tooltip: {
-
-			dual: function(obj) {
-				return {
-					label: function(tooltipItem) {
-						if (tooltipItem.datasetIndex === 0) {
-							return obj.tooltipText_in[tooltipItem.index];
-						} else if (tooltipItem.datasetIndex === 1) {
-							return obj.tooltipText_out[tooltipItem.index];
-						}
-					},
-					title: function(tooltipItem, data) {
-						return data.labels[tooltipItem[0].index];
-					}
-				};
-			},
 
 			percent: function(obj) {
 				return {
@@ -368,8 +288,9 @@ var ChartModule = (function() {
 	function update() {
 		Xhr.request({ url: 'php/cpu/cpu.temperature.php' })
 			.then(r => {
-				// chart.data.datasets[0].labels = r['data'].reduce((a, b, i) => a.push('CPU ' + i), []);
-				chart.data.datasets[0].data = r['data'];
+				document.querySelector('[data-name="cpu-temperature"]').textContent = r.avg + " \u2103";
+				chart.data.labels = Object.keys(r.data);
+				chart.data.datasets[0].data = Object.values(r.data);
 				chart.update();
 			})
 			.catch(e => console.error(e));
@@ -378,8 +299,7 @@ var ChartModule = (function() {
 	let config = {
 		type: 'horizontalBar',
 		data: {
-			labels: ['CPU 1', 'CPU 2', 'CPU 3', 'CPU 4', 'CPU 5', 'CPU 6', 'CPU 7', 'CPU 8'],
-			// labels: [],
+			labels: [],
 			datasets: [{
 				data: [],
 				backgroundColor: colors
@@ -526,7 +446,9 @@ var ChartModule = (function() {
 	function update() {
 		Xhr.request({ url: 'php/disk/disk.temperature.php' })
 			.then(r => {
-				chart.data.datasets[0].data = r['data'];
+				document.querySelector('[data-name="disk-temperature"]').textContent = r.avg + " \u2103";
+				chart.data.labels = Object.keys(r.data);
+				chart.data.datasets[0].data = Object.values(r.data);
 				chart.update();
 			})
 			.catch(e => console.error(e));
@@ -535,7 +457,7 @@ var ChartModule = (function() {
 	let config = {
 		type: 'horizontalBar',
 		data: {
-			labels: ['da0', 'ada0', 'ada1', 'ada2', 'ada3', 'ada4', 'ada5'],
+			labels: [],
 			datasets: [{
 				data: [],
 				backgroundColor: colors
@@ -639,31 +561,31 @@ var ChartModule = (function() {
 /**
  * Memory usage chart
  */
-(function(undefined) {
+var MemoryUsageChart = (function(undefined) {
 
 	let chart;
+	let interval;
 
 	function init() {
 		let ctx = document.getElementById('memory-usage-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
-		setInterval(() => update(), 60000);
+		interval = setInterval(() => update(), 60000);
 	}
 
 	function update() {
-		Xhr.request({ url: 'php/memory/memory.usage.php'})
+		Xhr.request({ url: 'php/memory/memory.usage.php' })
 			.then(r => {
-				document.querySelector('[data-name="memory-usage"]').textContent = Convert.fromBytes(r.total);
-				for (let key in r.data) {
-					chart.data.labels.push(key);
-					chart.data.datasets[0].data.push(r.data[key].bytes)
-				}
-				// this keeps the first half of the array !!!!!!!!!!!!
-				chart.data.labels.length = Object.keys(r.data).length;
-				chart.data.datasets[0].data.length = Object.keys(r.data).length;
+				document.querySelector('[data-name="memory-usage"]').innerHTML = Convert.fromBytes(r.usage) + '</br>' + Convert.fromBytes(r.total);
+				chart.data.labels = Object.keys(r.data);
+				chart.data.datasets[0].data = Object.values(r.data);
 				chart.update();
 			})
 			.catch(e => console.error(e))
+	}
+
+	function pause() {
+		clearInterval(interval);
 	}
 
 	let config = {
@@ -698,12 +620,18 @@ var ChartModule = (function() {
 
 	init();
 
+	return {
+		init: init,
+		play: init,
+		pause: pause
+	};
+
 }());
 
 /**
  * Network bandwidth chart
  */
-(function(undefined) {
+var NetworkBandwidthChart = (function(undefined) {
 
 	let chart;
 
@@ -790,12 +718,18 @@ var ChartModule = (function() {
 
 	init();
 
+	// return {
+	// 	init: init,
+	// 	play: ChartModule.play(chart),
+	// 	pause: ChartModule.pause(chart)
+	// };
+
 }());
 
 /**
  * UPS usage chart
  */
-(function(undefined) {
+var UpsUsageChart = (function(undefined) {
 
 	let chart;
 
@@ -806,7 +740,7 @@ var ChartModule = (function() {
 	}
 
 	function update() {
-		Xhr.request({ url: 'php/ups/ups.usage.php'})
+		Xhr.request({ url: 'php/ups/ups.usage.php' })
 			.then(r => {
 				document.querySelector('[data-name="ups-info"]').textContent = r.status;
 				let data = chart.config.data;
@@ -875,112 +809,93 @@ var ChartModule = (function() {
 
 	init();
 
+	// return {
+	// 	init: init,
+	// 	play: ChartModule.play(chart),
+	// 	pause: ChartModule.pause(chart)
+	// };
+
 }());
 
-var System = {
+/**
+ *  System process table
+ */
+var SystemProcessTable = (function(undefined) {
 
-	processes: {
+	let interval;
 
-		fields: [
-			{ 'title': 'User', 'field': 'user' },
-			// {'title': 'PID', 'field': 'pid'},
-			{ 'title': 'Time', 'field': 'time' },
-			{ 'title': 'TC', 'field': 'nlwp' },
-			{ 'title': 'CPU', 'field': 'pcpu' },
-			{ 'title': 'Mem', 'field': 'pmem' },
-			{ 'title': 'CMD', 'field': 'comm' }
-			// {'title': 'Data Size', 'field': 'dsiz'}
-			// {'title': 'Elapsed', 'field': 'etimes'}
-		],
-
-		init: function(r, aux) {
-			Table.createHorizontal(System.specs.parse, 'top-processes', this.fields, r);
-			document.querySelector('div[data-name="top-processes"]').textContent = aux + ' Total';
-		}
-
-	},
-
-	specs: {
-
-		fields: [
-			{ 'title': 'Hostname', 'field': 'hostname' },
-			{ 'title': 'OS', 'field': 'os' },
-			{ 'title': 'Version', 'field': 'os_version' },
-			{ 'title': 'Kernel', 'field': 'kernel_version' },
-			{ 'title': 'Platform OS', 'field': 'platform_os' },
-			{ 'title': 'CPU Model', 'field': 'cpu_model' },
-			{ 'title': 'Motherboard', 'field': 'motherboard' },
-			{ 'title': 'System', 'field': 'system' },
-			{ 'title': 'System BIOS', 'field': 'system_bios' },
-			{ 'title': 'System Uptime', 'field': 'system_uptime' },
-			{ 'title': 'Disk Interface', 'field': 'disk_interface' },
-			{ 'title': 'Network Interface', 'field': 'network_interface' },
-			{ 'title': 'USB Interface', 'field': 'usb_interface' },
-			{ 'title': 'UPS Info', 'field': 'ups_info' }
-		],
-
-		init: function(r) {
-			Table.createVertical(this.parse, 'system-specs', this.fields, r);
-		},
-
-		parse: function(fieldValue, response) {
-			return response[fieldValue.field];
-		}
-
+	function init() {
+		update();
+		interval = setInterval(() => update(), 5000);
 	}
 
-};
+	function update() {
+		Xhr.request({ url: 'php/system/system.processes.php' })
+			.then(r => {
+				document.querySelector('[data-name="system-processes"]').innerHTML = r.total;
+				Table.createHorizontal('system-processes', r.data);
+			})
+			.catch(e => console.error(e))
+	}
 
-var Table = {
+	function pause() {
+		clearInterval(interval);
+	}
 
-	clearPalette: function(el) {
+	init();
+
+	return {
+		init: init,
+		play: init,
+		pause: pause
+	};
+
+}());
+
+/**
+ * System info table
+ */
+var SystemInfoTable = (function() {
+
+	function init() {
+		Xhr.request({ url: 'php/system/system.info.php' })
+			.then(r => Table.createVertical('system-info', r))
+			.catch(e => console.error(e));
+	}
+
+	init();
+
+}());
+
+var Table = (function(undefined) {
+
+	function clearPalette(el) {
 		while (el.firstChild) {
 			el.removeChild(el.firstChild);
 		}
-	},
+	}
 
-	createVertical: function(callback, element, fields, response) {
+	function createHorizontal(element, response) {
 		let el = document.getElementById(element);
-		this.clearPalette(el);
-		let table = document.createElement('table');
-		table.classList.add('vertical', 'slds-table');
-		let count = 0;
-		fields.forEach(fieldValue => {
-			let dataInsert = callback(fieldValue, response);
-			if (dataInsert && dataInsert !== '') {
-				let row = table.insertRow(count);
-				let cell1 = row.insertCell(0);
-				let cell2 = row.insertCell(1);
-				cell1.innerHTML = fieldValue.title;
-				cell2.innerHTML = dataInsert;
-				count++;
-			}
-		});
-		el.appendChild(table);
-		requestAnimationFrame(() => el.classList.add('fade-in'));
-	},
-
-	createHorizontal: function(callback, element, fields, response) {
-		let el = document.getElementById(element);
-		this.clearPalette(el);
+		clearPalette(el);
 		let table = document.createElement('table');
 		table.classList.add('horizontal', 'slds-table');
 		let df = document.createDocumentFragment();
 		// Create the table head
 		let tr_thead = document.createElement('tr');
-		fields.forEach(v => {
+		Object.keys(response[0]).forEach(v => {
 			let th = document.createElement('th');
-			th.appendChild(document.createTextNode(v.title));
+			th.appendChild(document.createTextNode(v));
 			tr_thead.appendChild(th);
 		});
 		df.appendChild(tr_thead);
 		// Create the table data
 		response.forEach(responseValue => {
 			let tr_tbody = document.createElement('tr');
-			fields.forEach(fieldValue => {
-				let dataInsert = callback(fieldValue, responseValue);
+			Object.values(responseValue).forEach(v => {
+				// let dataInsert = callback(fieldValue, responseValue);
 				let td = document.createElement('td');
-				td.appendChild(document.createTextNode(dataInsert));
+				td.appendChild(document.createTextNode(v));
 				tr_tbody.appendChild(td);
 			});
 			df.appendChild(tr_tbody);
@@ -990,45 +905,35 @@ var Table = {
 		requestAnimationFrame(() => el.classList.add('fade-in'));
 	}
 
-}; // Close Table Object
+	function createVertical(element, response) { /// fix this later..
+		let el = document.getElementById(element);
+		clearPalette(el);
+		let table = document.createElement('table');
+		table.classList.add('vertical', 'slds-table');
+		let count = 0;
+		for (let key in response) {
+			// let dataInsert = callback(fieldValue, response);
+			// if (dataInsert && dataInsert !== '') {
+				let row = table.insertRow(count);
+				let cell1 = row.insertCell(0);
+				let cell2 = row.insertCell(1);
+				cell1.textContent = key;
+				cell2.textContent = response[key];
+				count++;
+			// }
+		};
+		el.appendChild(table);
+		requestAnimationFrame(() => el.classList.add('fade-in'));
+	}
+
+	return {
+		createHorizontal: createHorizontal,
+		createVertical: createVertical
+	};
+
+}());
 
 var App = {
-
-	initialRequests: ['init', 'poll'],
-	updateRequests: ['poll'],
-
-	init: function() {
-		// The inital requests
-		this.initialRequests.forEach(v => {
-			Xhr.request({ 'url': 'php/functions.php?type=' + v })
-				.then(r => this.modulesInit(r, v))
-				.catch(e => console.error(e));
-		});
-		// The update requests
-		updateData = () => {
-			this.updateRequests.forEach(v => {
-				Xhr.request({ 'url': 'php/functions.php?type=' + v })
-					.then(r => this.modulesUpdate(r, v))
-					.catch(e => console.error(e));
-			});
-		};
-		setInterval(() => updateData(), 5000);
-	},
-
-	modulesInit: function(r, type) {
-		switch (type) {
-			case 'init':
-				System.specs.init(r);
-				System.processes.init(r['top_processes'], r['process_count']);
-		}
-	},
-
-	modulesUpdate: function(r, type) {
-		switch (type) {
-			case 'poll':
-				System.processes.init(r['top_processes'], r['process_count']);
-		}
-	},
 
 	switchViews: function(toChart, element, fromText, toText) {
 		let button = document.querySelector('div[data-name="' + element + '"]');
@@ -1049,9 +954,5 @@ var App = {
 			this.chart.update();
 		})
 	}
-} // Close App Object
 
-if (!navigator.userAgent.match(/bot|spider/gi)) {
-	App.init();
-	// Object.assign(Chart.defaults.global, defaults);
 }

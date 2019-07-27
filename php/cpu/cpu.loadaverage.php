@@ -1,12 +1,12 @@
 <?php
 require_once 'cpu.php';
 
-class LoadAverage extends Cpu {
+class CpuLoadAverage extends Cpu {
 	
 	public function __construct() {
 		echo json_encode(array(
-			'clock' => $this->frequency(),
-			'data' => $this->load_average()
+			'clock' => $this->getFrequency(),
+			'data' => $this->getLoadAverage()
 		));
 	}
 
@@ -14,15 +14,14 @@ class LoadAverage extends Cpu {
     $cmd = 'top -P ---btIquz';
   }
 
-  public function frequency() {
+  public function getFrequency() {
     $cmd = 'sysctl -n dev.cpu.0.freq';
     return Shell::exec($cmd) . ' Mhz';
   }
 
-  public function load_average() {
-    $rs = sys_getloadavg();
+  public function getLoadAverage() {
     $result = array();
-    foreach($rs as $key => $value) {
+    foreach(sys_getloadavg() as $key => $value) {
       $result[] = round($value, 2);
     }
     return $result;
@@ -30,6 +29,6 @@ class LoadAverage extends Cpu {
 
 }
 
-$load_average = new LoadAverage();
+$load_average = new CpuLoadAverage();
 
 ?>

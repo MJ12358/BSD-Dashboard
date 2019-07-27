@@ -1,28 +1,34 @@
 <?php
 require_once 'disk.php';
 
-class Temperature extends Disk {
+class DiskTemperature extends Disk {
+
+	public $average_temperature;
 
 	public function __construct() {
 		// parent::__construct();
 		echo json_encode(array(
-			'data' => $this->getTemperature()
+			'data' => $this->getTemperature(),
+			'avg' => $this->average_temperature
 		));
 	}
 
   // requires root
   public function getTemperature() {
-    $result = array();
+		$result = array();
     foreach($this->getNames() as $key => $value) {
       $cmd = 'smartctl -A /dev/' . $value . ' | awk \'/Temperature_Celsius/{print $0}\' | awk \'{print $10}\'';
-			// $result[$value] = Shell::exec($cmd);
-			$result[] = Shell::exec($cmd);
-    }
+			$temp = Shell::exec($cmd);
+			if ($temp) {
+				$result[$value] = $temp;
+			}
+		}
+		$this->average_temperature = round(array_sum(array_values($result)) / count($result), 2);
     return $result;
   }
 
 }
 
-$disk_temperature = new Temperature();
+$disk_temperature = new DiskTemperature();
 
 ?>

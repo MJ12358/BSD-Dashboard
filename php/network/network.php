@@ -12,12 +12,6 @@ class Network {
     $cmd = 'ifconfig | grep flags | cut -d : -f1';
     return explode(PHP_EOL, Shell::exec($cmd));
   }
-
-  public function getInterfaceName() {
-    $cmd = 'sysctl -n dev.ix.0.%desc';
-    $result = Shell::exec($cmd);
-    return trim(explode('PCI', $result)[0]);
-	}
 	
 //   public static $if_count;
 

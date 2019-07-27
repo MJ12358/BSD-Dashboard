@@ -30,11 +30,6 @@ class Disk {
     return explode(' ', Shell::exec($cmd));
 	}
 	
-	public function getInterfaceName() {
-    $cmd = 'sysctl -n dev.ahci.0.%desc';
-    return Shell::exec($cmd);
-	}
-	
 	public function getDatasetList() {
 		$cmd = 'zfs list | tail -n +3';
 		$results = Shell::exec($cmd);

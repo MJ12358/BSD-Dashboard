@@ -17,11 +17,9 @@ class Bandwidth extends Disk {
 	}
 
   public function getBandwidth() {
-    
     // possibly -I 1 (to get stats within time period)
     // $cmd = 'iostat -x -n 7';
 		$cmd = 'zpool iostat tank 1 2 | tail -1';
-		// this returns more than one space between properties
 		$result = preg_replace('/\h+/', ' ', Shell::exec($cmd));
 		// now turn that into an array
 		$result = explode(' ', $result);
@@ -30,9 +28,7 @@ class Bandwidth extends Disk {
 		$this->disk_bandwidth_total = $bytes_in + $bytes_out;
     return array(
 			'bytes_in' => $bytes_in,
-			'bytes_out' => $bytes_out,
-			// 'formatted_out' => $result[5],
-			// 'formatted_in' => $result[6]
+			'bytes_out' => $bytes_out
     );
 	}
 

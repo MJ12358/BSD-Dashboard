@@ -11,14 +11,9 @@ class Cpu {
 
 	public function getCores() {
     $cmd = 'sysctl -n hw.ncpu';
-    $tmp = intval(Shell::exec($cmd));
-    return empty($tmp) ? 1 : $tmp;
+    $result = intval(Shell::exec($cmd));
+    return empty($result) ? 1 : $result;
 	}
-	// move this to the system class
-	public function getModel() {
-    $cmd = 'sysctl -n hw.model';
-    return Shell::exec($cmd);
-  }
 
 }
 
