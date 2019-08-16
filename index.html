@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en" dir="ltr" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -8,118 +8,274 @@
 	<!-- <link rel="preload" as="image" href="/img/loader.svg"/> -->
 	<link rel="icon" href="/img/dashboard-32x32.png" />
 	<link rel="stylesheet" type="text/css" href="css/styles.css" />
-	<!-- <link rel="stylesheet" type="text/css" href="/lib/js/bootstrap/bootstrap.min.css" /> -->
+	<link rel="stylesheet" type="text/css"
+		href="/lib/css/slds/assets/styles/salesforce-lightning-design-system.min.css" />
 </head>
 
 <body>
-	<div class="container-fluid row wrapper">
 
-		<!-- <nav id="sidebar" class="nav flex-column nav-pills">
-			<h3>Dashboard</h3>
-			<a class="nav-link active" data-toggle="pill">CPU</a>
-			<a class="nav-link" data-toggle="pill">Disk</a>
-		</nav> -->
-
-		<!-- <main id="content"> -->
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>System Info</div>
+	<div class="slds-context-bar">
+		<div class="slds-context-bar__primary">
+			<div class="slds-context-bar__item slds-no-hover">
+				<div class="slds-context-bar__icon-action">
+					<button class="slds-button slds-icon-waffle_container slds-context-bar__button">
+						<span class="slds-icon-waffle">
+							<span class="slds-r1"></span>
+							<span class="slds-r2"></span>
+							<span class="slds-r3"></span>
+							<span class="slds-r4"></span>
+							<span class="slds-r5"></span>
+							<span class="slds-r6"></span>
+							<span class="slds-r7"></span>
+							<span class="slds-r8"></span>
+							<span class="slds-r9"></span>
+						</span>
+						<span class="slds-assistive-text">Open/Close Sidebar</span>
+					</button>
 				</div>
-				<div id="system-info" class="container__table"></div>
+				<span class="slds-context-bar__label-action slds-context-bar__app-name">
+					<span class="slds-truncate" title="Dashboard">Dashboard</span>
+				</span>
 			</div>
 
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>Top Processes</div>
-					<div class="container__info" data-name="system-processes"></div>
-				</div>
-				<div id="system-processes" class="container__table"></div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>CPU Load Average</div>
-					<div class="container__info" data-name="cpu-load-average"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="cpu-load-average-chart"></canvas>
+		</div>
+		<div class="slds-context-bar__secondary slds-grid slds-grid_align-end">
+			<div class="slds-grid">
+				<div class="slds-context-bar__item slds-no-hover">
+					<span class="slds-context-bar__label-action slds-context-bar__app-name">
+						<span class="slds-truncate" title="Primary">Primary</span>
+					</span>
 				</div>
 			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>CPU Temps</div>
-					<div class="container__info" data-name="cpu-temperature"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="cpu-temperature-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>Memory Usage</div>
-					<div class="container__info" data-name="memory-usage"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="memory-usage-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div id="disk-bandwidth-header">Disk Bandwidth</div>
-					<div class="container__info" data-name="disk-bandwidth"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="disk-bandwidth-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>Disk Temps</div>
-					<div class="container__info" data-name="disk-temperature"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="disk-temperature-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div id="disk-usage-header">Dataset Usage</div>
-					<div class="container__info" data-name="disk-usage"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="disk-usage-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>Network Usage</div>
-					<div class="container__info" data-name="network-bandwidth"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="network-bandwidth-chart"></canvas>
-				</div>
-			</div>
-
-			<div class="container box-shadow fade-in">
-				<div class="container__header">
-					<div>UPS Stats</div>
-					<div class="container__info" data-name="ups-info"></div>
-				</div>
-				<div class="container__chart">
-					<canvas id="ups-info-chart"></canvas>
-				</div>
-			</div>
-
+		</div>
 	</div>
 
-	<!-- </main> -->
+	<div class="slds-vertical-tabs">
+		<ul class="slds-vertical-tabs__nav" role="tablist" aria-orientation="vertical">
+
+			<li class="slds-vertical-tabs__nav-item slds-is-active" title="Overview" role="presentation">
+				<a class="slds-vertical-tabs__link" href="javascript:void(0)" role="tab" tabindex="0" aria-selected="true"
+					aria-controls="tab-0" id="tab-0__nav">
+					<span class="slds-vertical-tabs__left-icon">
+						<span class="slds-icon_container">
+							<svg class="slds-icon slds-icon_small slds-icon-text-default" aria-hidden="true">
+								<use xlink:href="/lib/css/slds/assets/icons/utility-sprite/svg/symbols.svg#home"></use>
+							</svg>
+						</span>
+					</span>
+					<span class="slds-truncate" title="Overview">Overview</span>
+					<span class="slds-vertical-tabs__right-icon"></span>
+				</a>
+			</li>
+
+			<li class="slds-vertical-tabs__nav-item" title="CPU" role="presentation">
+				<a class="slds-vertical-tabs__link" href="javascript:void(0)" role="tab" tabindex="-1" aria-selected="false"
+					aria-controls="tab-1" id="tab-1__nav">
+					<span class="slds-vertical-tabs__left-icon">
+						<span class="slds-icon_container">
+							<svg class="slds-icon slds-icon_small slds-icon-text-default" aria-hidden="true">
+								<use xlink:href="/lib/css/slds/assets/icons/utility-sprite/svg/symbols.svg#desktop"></use>
+							</svg>
+						</span>
+					</span>
+					<span class="slds-truncate" title="CPU">CPU</span>
+					<span class="slds-vertical-tabs__right-icon"></span>
+				</a>
+			</li>
+
+			<li class="slds-vertical-tabs__nav-item" title="Disk" role="presentation">
+				<a class="slds-vertical-tabs__link" href="javascript:void(0)" role="tab" tabindex="-1" aria-selected="false"
+					aria-controls="tab-2" id="tab-2__nav">
+					<span class="slds-vertical-tabs__left-icon">
+						<span class="slds-icon_container">
+							<svg class="slds-icon slds-icon_small slds-icon-text-default" aria-hidden="true">
+								<use xlink:href="/lib/css/slds/assets/icons/utility-sprite/svg/symbols.svg#database"></use>
+							</svg>
+						</span>
+					</span>
+					<span class="slds-truncate" title="Disk">Disk</span>
+					<span class="slds-vertical-tabs__right-icon"></span>
+				</a>
+			</li>
+
+			<li class="slds-vertical-tabs__nav-item" title="Memory" role="presentation">
+				<a class="slds-vertical-tabs__link" href="javascript:void(0)" role="tab" tabindex="-1" aria-selected="false"
+					aria-controls="tab-3" id="tab-3__nav">
+					<span class="slds-vertical-tabs__left-icon">
+						<span class="slds-icon_container">
+							<svg class="slds-icon slds-icon_small slds-icon-text-default" aria-hidden="true">
+								<use xlink:href="/lib/css/slds/assets/icons/utility-sprite/svg/symbols.svg#einstein"></use>
+							</svg>
+						</span>
+					</span>
+					<span class="slds-truncate" title="Memory">Memory</span>
+					<span class="slds-vertical-tabs__right-icon"></span>
+				</a>
+			</li>
+
+			<li class="slds-vertical-tabs__nav-item" title="Network" role="presentation">
+				<a class="slds-vertical-tabs__link" href="javascript:void(0)" role="tab" tabindex="-1" aria-selected="false"
+					aria-controls="tab-4" id="tab-4__nav">
+					<span class="slds-vertical-tabs__left-icon">
+						<span class="slds-icon_container">
+							<svg class="slds-icon slds-icon_small slds-icon-text-default" aria-hidden="true">
+								<use xlink:href="/lib/css/slds/assets/icons/utility-sprite/svg/symbols.svg#feed"></use>
+							</svg>
+						</span>
+					</span>
+					<span class="slds-truncate" title="Network">Network</span>
+					<span class="slds-vertical-tabs__right-icon"></span>
+				</a>
+			</li>
+
+		</ul>
+
+		<section class="slds-vertical-tabs__content slds-show" id="tab-0" role="tabpanel" aria-labelledby="tab-0__nav">
+			<div class="flex-container">
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>System Info</div>
+					</div>
+					<div id="system-info" class="container__chart"></div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Top Processes</div>
+						<div class="container__info" data-name="system-processes"></div>
+					</div>
+					<div id="system-processes" class="container__chart"></div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>CPU Load Average</div>
+						<div class="container__info" data-name="cpu-load-average"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="cpu-load-average-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Memory Usage</div>
+						<div class="container__info" data-name="memory-usage"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="memory-usage-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div id="disk-usage-header">Dataset Usage</div>
+						<div class="container__info" data-name="disk-usage"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="disk-usage-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>UPS Stats</div>
+						<div class="container__info" data-name="ups-info"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="ups-info-chart"></canvas>
+					</div>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="slds-vertical-tabs__content slds-hide" id="tab-1" role="tabpanel" aria-labelledby="tab-1__nav">
+			<div class="flex-container">
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>CPU Temps</div>
+						<div class="container__info" data-name="cpu-temperature"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="cpu-temperature-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>CPU Usage Per Core</div>
+						<div class="container__info" data-name="cpu-usage-per-core"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="cpu-usage-per-core-chart"></canvas>
+					</div>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="slds-vertical-tabs__content slds-hide" id="tab-2" role="tabpanel" aria-labelledby="tab-2__nav">
+			<div class="flex-container">
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div id="disk-bandwidth-header">Disk Bandwidth</div>
+						<div class="container__info" data-name="disk-bandwidth"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="disk-bandwidth-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Disk Temps</div>
+						<div class="container__info" data-name="disk-temperature"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="disk-temperature-chart"></canvas>
+					</div>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="slds-vertical-tabs__content slds-hide" id="tab-3" role="tabpanel" aria-labelledby="tab-3__nav">
+			<div class="flex-container">
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Memory Usage By Type</div>
+						<div class="container__info" data-name="memory-usage-by-type"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="memory-usage-by-type-chart"></canvas>
+					</div>
+				</div>
+
+			</div>
+		</section>
+
+		<section class="slds-vertical-tabs__content slds-hide" id="tab-4" role="tabpanel" aria-labelledby="tab-4__nav">
+			<div class="flex-container">
+		
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Network Usage</div>
+						<div class="container__info" data-name="network-bandwidth"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="network-bandwidth-chart"></canvas>
+					</div>
+				</div>
+		
+			</div>
+		</section>
+
+	</div> <!-- Close vertical tabs -->
 
 </body>
 
@@ -129,5 +285,36 @@
 <script type="text/javascript" src="/lib/js/chartjs/chartjs-plugin-streaming.min.js"></script>
 <script type="text/javascript" src="/js/xhr.js"></script>
 <script type="text/javascript" src="js/javascript.js"></script>
+
+<script>
+	(function() {
+		'use strict';
+		var navItems = document.querySelectorAll('.slds-vertical-tabs__link');
+		Array.from(navItems).forEach(v => {
+			v.addEventListener('click', function() {
+				s(this);
+			});
+		});
+		function s(el) {
+			Array.from(navItems).forEach(v => {
+				v.parentNode.classList.remove('slds-is-active');
+				v.setAttribute('tabindex', -1);
+				v.setAttribute('aria-selected', false);
+				let tab = document.getElementById(v.getAttribute('aria-controls'));
+				tab.classList.remove('slds-show');
+				tab.classList.add('slds-hide');
+			});
+			el.parentNode.classList.add('slds-is-active');
+			el.setAttribute('tabindex', 0);
+			el.setAttribute('aria-selected', true);
+			let tab = document.getElementById(el.getAttribute('aria-controls'));
+			tab.classList.add('slds-show');
+			tab.classList.remove('slds-hide');
+		}
+		window.VerticalTabs = {
+			switch: s
+		}
+	}());
+</script>
 
 </html>
