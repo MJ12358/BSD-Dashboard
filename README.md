@@ -1,5 +1,5 @@
 # BSD-Dashboard
-![release](https://img.shields.io/badge/release-v1.0-informational.svg) ![FreeBSD](https://img.shields.io/badge/FreeBSD-v11-red.svg) ![PHP](https://img.shields.io/badge/PHP-v7-blueviolet.svg) ![chartjs](https://img.shields.io/badge/chartjs-v2.8-green.svg) ![chartjs-plugin-streaming](https://img.shields.io/badge/chartjs-streaming-1.8-orange.svg)
+![release](https://img.shields.io/badge/release-v1.0-informational.svg) ![FreeBSD](https://img.shields.io/badge/FreeBSD-v11-red.svg) ![PHP](https://img.shields.io/badge/PHP-v7-blueviolet.svg) ![chartjs](https://img.shields.io/badge/chartjs-v2.8-green.svg) ![chartjs-plugin-streaming](https://img.shields.io/badge/chartjs_streaming-1.8-orange.svg)
 
 FreeBSD / ZFS Dashboard for server monitoring and statistics.
 
@@ -9,7 +9,7 @@ This project began because I wanted a graphical representation of server statist
 
 * FreeBSD 11
 * PHP 7
-* Chart.js
+* [chart.js](https://github.com/chartjs)
 * [chartjs-plugin-streaming](https://github.com/nagix/chartjs-plugin-streaming)
 * Browser capable of XMLHttpRequest
 
