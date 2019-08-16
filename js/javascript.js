@@ -1,10 +1,18 @@
 // TODO: disk io chart
-// TODO: per cpu utilization
 // TODO: memory usage per process
 // TODO: global adjust of framerate, frequency, duration
 Chart.defaults.global.responsive = true;
 Chart.defaults.global.maintainAspectRatio = false;
 Chart.defaults.global.tooltips.intersect = false;
+
+var config = {};
+document.querySelectorAll('.slds-vertical-tabs__content').forEach(v => {
+	config[v.id] = [];
+	v.querySelectorAll('.container__chart').forEach(w => {
+		config[v.id].push(w.id);
+	});
+});
+console.dir(config);
 var defaults = {
 	responsive: true,
 	maintainAspectRatio: false,
@@ -68,114 +76,53 @@ var ChartModule = (function(undefined) {
 		chart.update({ duration: 0 });
 	}
 
+	var tooltip = {
+
+		percentage: function() {
+			return {
+				label: function(tooltipItem, data) {
+					let dataset = data.datasets[tooltipItem.datasetIndex];
+					let total = dataset.data.reduce((pre, cur) => pre + cur);
+					let currentValue = dataset.data[tooltipItem.index];
+					let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
+					return `${Convert.fromBytes(currentValue)} ${percentage}%`;
+				},
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.index]
+					}
+				},
+				title: function(tooltipItem, data) {
+					return data.labels[tooltipItem[0].index];
+				}
+			};
+		},
+
+		temperature: function() {
+			return {
+				label: function(tooltipItem, data) {
+					let dataset = data.datasets[tooltipItem.datasetIndex];
+					let currentValue = dataset.data[tooltipItem.index];
+					return currentValue + " \u2103";
+				},
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.index]
+					}
+				},
+				title: function(tooltipItem, data) {
+					return data.labels[tooltipItem[0].index];
+				}
+			};
+		},
+
+	}
+
 	return {
 
 		play: play,
 		pause: pause,
-
-		tooltip: {
-
-			percent: function(obj) {
-				return {
-					label: function(tooltipItem, data) {
-						let dataset = data.datasets[tooltipItem.datasetIndex];
-						let total = dataset.data.reduce((pre, cur) => pre + cur);
-						let currentValue = dataset.data[tooltipItem.index];
-						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
-						return obj.tooltipText[tooltipItem.index] + ' ' + percentage + '%';
-					},
-					title: function(tooltipItem, data) {
-						return data.labels[tooltipItem[0].index];
-					}
-				};
-			},
-
-			temp: function(obj) {
-				return {
-					label: function(tooltipItem, data) {
-						let dataset = data.datasets[tooltipItem.datasetIndex];
-						let currentValue = dataset.data[tooltipItem.index];
-						return currentValue + " \u2103";
-					},
-					title: function(tooltipItem) {
-						if (obj.tooltipText) {
-							return obj.tooltipText[tooltipItem[0].index];
-						} else {
-							return obj.labels[tooltipItem[0].index];
-						}
-					}
-				};
-			}
-
-		},
-
-		updateDataPoint: function(obj, data, label, text) {
-			if (text) { obj.button.textContent = text; }
-			let do_shift = false;
-			obj.chart.data.datasets.forEach((v, i) => {
-				if (v.data.length > length) {
-					v.data.shift();
-					do_shift = true;
-				}
-				v.data.push(data[i]);
-			});
-			do_shift ? obj.chart.data.labels.shift() : '';
-			obj.chart.data.labels.push(label);
-			obj.chart.update();
-		},
-
-		updateDataObject: function(obj, data, label) {
-			if (obj.chart.data.datasets[0].data.length > length) {
-				obj.chart.data.labels.shift();
-				obj.chart.data.datasets[0].data.shift();
-				obj.chart.data.datasets[1].data.shift();
-				obj.tooltipText_in.shift();
-				obj.tooltipText_out.shift();
-			}
-			obj.chart.data.labels.push(label);
-			if (data.hasOwnProperty('bytes_in') || data.hasOwnProperty('bytes_out')) {
-				obj.chart.data.datasets[0].data.push(data['bytes_in']);
-				obj.chart.data.datasets[1].data.push(data['bytes_out']);
-				obj.tooltipText_in.push(data['formatted_in']);
-				obj.tooltipText_out.push(data['formatted_out']);
-			} else {
-				obj.chart.data.datasets[0].data.push(data['input_voltage']['actual']);
-				obj.chart.data.datasets[1].data.push(data['battery_voltage']['actual']);
-				obj.tooltipText_in.push(data['input_voltage']['actual']);
-				obj.tooltipText_out.push(data['battery_voltage']['actual']);
-			}
-
-			obj.chart.update();
-		},
-
-		replaceData: function(obj, data) {
-			obj.chart.data.datasets[0].data = data;
-			obj.chart.update();
-		},
-
-		replaceDataArray: function(obj, data) {
-			obj.labels = [];
-			obj.dataPoints = [];
-			obj.tooltipText = [];
-			data.forEach(v => {
-				obj.labels.push(v.title);
-				obj.dataPoints.push(v.bytes);
-				obj.tooltipText.push(v.formatted);
-			});
-			if (obj.hasOwnProperty('chart')) {
-				obj.chart.update();
-			}
-		},
-
-		replaceDataObject: function(obj, data, tt) {
-			obj.chart.data.datasets[0].data = [];
-			tt ? obj.tooltipText = [] : '';
-			for (let key in data) {
-				obj.chart.data.datasets[0].data.push(data[key]['bytes'] || data[key]);
-				tt ? obj.tooltipText.push(data[key]['formatted']) : '';
-			}
-			obj.chart.update();
-		}
+		tooltip: tooltip
 
 	};
 
@@ -184,7 +131,7 @@ var ChartModule = (function(undefined) {
 /**
  * Cpu load average chart
  */
-(function(undefined) {
+var CpuLoadAverageChart = (function(undefined) {
 
 	let chart;
 
@@ -201,7 +148,7 @@ var ChartModule = (function(undefined) {
 				chart.config.data.datasets.forEach((v, i) => {
 					v.data.push({
 						x: Date.now(),
-						y: r['data'][i]
+						y: r.data[i]
 					});
 				});
 				chart.update({ preservation: true });
@@ -244,7 +191,7 @@ var ChartModule = (function(undefined) {
 				xAxes: [{
 					type: 'realtime',
 					realtime: {
-						duration: 30000,
+						duration: 60000,
 						refresh: 5000,
 						delay: 5000,
 						onRefresh: update
@@ -256,13 +203,18 @@ var ChartModule = (function(undefined) {
 					}
 				}]
 			},
-			plugins: {
-				streaming: {
-					frameRate: 30
-				}
-			},
+			// plugins: {
+			// 	streaming: {
+			// 		frameRate: 30
+			// 	}
+			// },
 			tooltips: {
-				mode: 'index'
+				mode: 'index',
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.datasetIndex]
+					}
+				}
 			}
 		}
 	};
@@ -274,7 +226,7 @@ var ChartModule = (function(undefined) {
 /**
  * Cpu temperature chart
  */
-(function(undefined) {
+var CpuTemperatureChart = (function(undefined) {
 
 	let chart;
 
@@ -319,16 +271,7 @@ var ChartModule = (function(undefined) {
 				}]
 			},
 			tooltips: {
-				callbacks: {
-					label: function(tooltipItem, data) {
-						let dataset = data.datasets[tooltipItem.datasetIndex];
-						let currentValue = dataset.data[tooltipItem.index];
-						return currentValue + " \u2103";
-					},
-					title: function(tooltipItem, data) {
-						return data.labels[tooltipItem[0].index];
-					}
-				}
+				callbacks: ChartModule.tooltip.temperature()
 			}
 		}
 	};
@@ -340,7 +283,7 @@ var ChartModule = (function(undefined) {
 /**
  * Disk bandwidth chart
  */
-(function(undefined) {
+var DiskBandwidthChart = (function(undefined) {
 
 	let chart;
 
@@ -357,11 +300,11 @@ var ChartModule = (function(undefined) {
 				let data = chart.config.data;
 				data.datasets[0].data.push({
 					x: Date.now(),
-					y: r.data.bytes_out
+					y: r.data.read
 				});
 				data.datasets[1].data.push({
 					x: Date.now(),
-					y: r.data.bytes_in
+					y: r.data.write
 				});
 				chart.update({ preservation: true });
 			})
@@ -395,7 +338,7 @@ var ChartModule = (function(undefined) {
 				xAxes: [{
 					type: 'realtime',
 					realtime: {
-						duration: 30000,
+						duration: 60000,
 						refresh: 5000,
 						delay: 5000,
 						onRefresh: update
@@ -419,6 +362,11 @@ var ChartModule = (function(undefined) {
 					label: function(tooltipItem, data) {
 						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
 						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.datasetIndex]
+						}
 					}
 				}
 			}
@@ -432,7 +380,7 @@ var ChartModule = (function(undefined) {
 /**
  * Disk temperature chart
  */
-(function(undefined) {
+var DiskTemperatureChart = (function(undefined) {
 
 	let chart;
 
@@ -483,6 +431,11 @@ var ChartModule = (function(undefined) {
 						let currentValue = dataset.data[tooltipItem.index];
 						return currentValue + " \u2103";
 					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.index]
+						}
+					},
 					title: function(tooltipItem, data) {
 						return data.labels[tooltipItem[0].index];
 					}
@@ -498,7 +451,7 @@ var ChartModule = (function(undefined) {
 /**
  * Disk usage chart
  */
-(function(undefined) {
+var DiskUsageChart = (function(undefined) {
 
 	let chart;
 
@@ -546,6 +499,11 @@ var ChartModule = (function(undefined) {
 						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
 						return `${Convert.fromBytes(currentValue)} ${percentage}%`;
 					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.index]
+						}
+					},
 					title: function(tooltipItem, data) {
 						return data.labels[tooltipItem[0].index];
 					}
@@ -576,7 +534,7 @@ var MemoryUsageChart = (function(undefined) {
 	function update() {
 		Xhr.request({ url: 'php/memory/memory.usage.php' })
 			.then(r => {
-				document.querySelector('[data-name="memory-usage"]').innerHTML = Convert.fromBytes(r.usage) + '</br>' + Convert.fromBytes(r.total);
+				document.querySelector('[data-name="memory-usage"]').innerHTML = `${Convert.fromBytes(r.usage)}</br>${Convert.fromBytes(r.total)}`;
 				chart.data.labels = Object.keys(r.data);
 				chart.data.datasets[0].data = Object.values(r.data);
 				chart.update();
@@ -602,18 +560,7 @@ var MemoryUsageChart = (function(undefined) {
 				animateRotate: true
 			},
 			tooltips: {
-				callbacks: {
-					label: function(tooltipItem, data) {
-						let dataset = data.datasets[tooltipItem.datasetIndex];
-						let total = dataset.data.reduce((pre, cur) => pre + cur);
-						let currentValue = dataset.data[tooltipItem.index];
-						let percentage = Math.floor(((currentValue / total) * 100) + 0.5);
-						return `${Convert.fromBytes(currentValue)} ${percentage}%`;
-					},
-					title: function(tooltipItem, data) {
-						return data.labels[tooltipItem[0].index];
-					}
-				}
+				callbacks: ChartModule.tooltip.percentage()
 			}
 		}
 	};
@@ -644,15 +591,15 @@ var NetworkBandwidthChart = (function(undefined) {
 	function update() {
 		Xhr.request({ url: 'php/network/network.bandwidth.php' })
 			.then(r => {
-				document.querySelector('[data-name="network-bandwidth"]').textContent = Convert.fromBytes(r.total);
+				document.querySelector('[data-name="network-bandwidth"]').textContent = Convert.fromBytes(r.data.ix0.total);
 				let data = chart.config.data;
 				data.datasets[0].data.push({
 					x: Date.now(),
-					y: r.data.bytes_out
+					y: r.data.ix0.bytes_out
 				});
 				data.datasets[1].data.push({
 					x: Date.now(),
-					y: r.data.bytes_in
+					y: r.data.ix0.bytes_in
 				});
 				chart.update({ preservation: true });
 			})
@@ -686,7 +633,7 @@ var NetworkBandwidthChart = (function(undefined) {
 				xAxes: [{
 					type: 'realtime',
 					realtime: {
-						duration: 30000,
+						duration: 60000,
 						refresh: 5000,
 						delay: 5000,
 						onRefresh: update
@@ -710,6 +657,11 @@ var NetworkBandwidthChart = (function(undefined) {
 					label: function(tooltipItem, data) {
 						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
 						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.datasetIndex]
+						}
 					}
 				}
 			}
@@ -784,9 +736,9 @@ var UpsUsageChart = (function(undefined) {
 				xAxes: [{
 					type: 'realtime',
 					realtime: {
-						duration: 30000,
-						refresh: 5000,
-						delay: 5000,
+						duration: 60000,
+						refresh: 10000,
+						delay: 10000,
 						onRefresh: update
 					}
 				}],
@@ -802,7 +754,12 @@ var UpsUsageChart = (function(undefined) {
 				}
 			},
 			tooltips: {
-				mode: 'index'
+				mode: 'index',
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.datasetIndex]
+					}
+				}
 			}
 		}
 	};
@@ -818,7 +775,7 @@ var UpsUsageChart = (function(undefined) {
 }());
 
 /**
- *  System process table
+ * System process table
  */
 var SystemProcessTable = (function(undefined) {
 
@@ -832,7 +789,7 @@ var SystemProcessTable = (function(undefined) {
 	function update() {
 		Xhr.request({ url: 'php/system/system.processes.php' })
 			.then(r => {
-				document.querySelector('[data-name="system-processes"]').innerHTML = r.total;
+				document.querySelector('[data-name="system-processes"]').textContent = r.total;
 				Table.createHorizontal('system-processes', r.data);
 			})
 			.catch(e => console.error(e))
@@ -867,6 +824,182 @@ var SystemInfoTable = (function() {
 
 }());
 
+/**
+ * Cpu usage per core chart
+ */
+var CpuUsagePerCoreChart = (function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('cpu-usage-per-core-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update(true);
+	};
+
+	function update(init) {
+		Xhr.request({ url: 'php/cpu/cpu.usagepercore.php' })
+			.then(r => {
+				document.querySelector('[data-name="cpu-usage-per-core"]').textContent = `${r.total} %`;
+				if (init === true) {
+					Object.keys(r.data).forEach((v, i) => {
+						chart.config.data.datasets.push({
+							label: v,
+							data: [],
+							backgroundColor: colorsAlpha[i],
+							borderColor: colors[i],
+							pointBorderColor: colors[i],
+							pointHoverBorderColor: colors[i]
+						});
+					});
+				}
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: Object.values(r.data)[i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: []
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 60000,
+						refresh: 10000,
+						delay: 10000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index',
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.datasetIndex]
+					}
+				},
+				itemSort: function(a, b) {
+					return b.value - a.value;
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
+ * Memory usage by type chart
+ */
+var MemoryUsageByTypeChart = (function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('memory-usage-by-type-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update(true);
+	};
+
+	function update(init) {
+		Xhr.request({ url: 'php/memory/memory.usage.php' })
+			.then(r => {
+				if (init === true) {
+					Object.keys(r.data).forEach((v, i) => {
+						chart.config.data.datasets.push({
+							label: v,
+							data: [],
+							backgroundColor: colorsAlpha[i],
+							borderColor: colors[i],
+							pointBorderColor: colors[i],
+							pointHoverBorderColor: colors[i]
+						});
+					});
+				}
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: Object.values(r.data)[i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: []
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 60000,
+						refresh: 10000,
+						delay: 10000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true,
+						callback: Convert.fromBytes
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index',
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
+						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.datasetIndex]
+						}
+					}
+				},
+				itemSort: function(a, b) {
+					return b.value - a.value;
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
 var Table = (function(undefined) {
 
 	function clearPalette(el) {
@@ -879,7 +1012,8 @@ var Table = (function(undefined) {
 		let el = document.getElementById(element);
 		clearPalette(el);
 		let table = document.createElement('table');
-		table.classList.add('horizontal', 'slds-table');
+		let tbody = document.createElement('tbody');
+		table.classList.add('slds-table', 'slds-table_bordered', 'slds-table_striped');
 		let df = document.createDocumentFragment();
 		// Create the table head
 		let tr_thead = document.createElement('tr');
@@ -893,34 +1027,32 @@ var Table = (function(undefined) {
 		response.forEach(responseValue => {
 			let tr_tbody = document.createElement('tr');
 			Object.values(responseValue).forEach(v => {
-				// let dataInsert = callback(fieldValue, responseValue);
 				let td = document.createElement('td');
 				td.appendChild(document.createTextNode(v));
 				tr_tbody.appendChild(td);
 			});
 			df.appendChild(tr_tbody);
 		});
-		table.appendChild(df);
+		tbody.appendChild(df);
+		table.appendChild(tbody);
 		el.appendChild(table);
 		requestAnimationFrame(() => el.classList.add('fade-in'));
 	}
 
-	function createVertical(element, response) { /// fix this later..
+	function createVertical(element, response) {
 		let el = document.getElementById(element);
 		clearPalette(el);
 		let table = document.createElement('table');
-		table.classList.add('vertical', 'slds-table');
+		table.classList.add('slds-table', 'slds-table_bordered');
 		let count = 0;
 		for (let key in response) {
-			// let dataInsert = callback(fieldValue, response);
-			// if (dataInsert && dataInsert !== '') {
-				let row = table.insertRow(count);
-				let cell1 = row.insertCell(0);
-				let cell2 = row.insertCell(1);
-				cell1.textContent = key;
-				cell2.textContent = response[key];
-				count++;
-			// }
+			let row = table.insertRow(count);
+			let th = document.createElement('th');
+			row.appendChild(th);
+			let cell2 = row.insertCell(1);
+			th.textContent = key;
+			cell2.textContent = response[key];
+			count++;
 		};
 		el.appendChild(table);
 		requestAnimationFrame(() => el.classList.add('fade-in'));
