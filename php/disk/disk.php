@@ -1,21 +1,13 @@
 <?php
 require_once '../functions.php';
 // zfs get (is awesome...)
+// sysctl kstat
 
 class Disk {
 
-	// public $disk_count;
-	public $disk_names;
-
-	// still not sure if i want to construct these or just call them when needed...
-	public function __construct() {
-		// $this->disk_count = $this->getCount();
-		$this->disk_names = $this->getNames();
-	}
-
 	public function getInfo() {
     $result = array();
-    foreach($this->$disk_names as $key => $value) {
+    foreach($this->getNames() as $key => $value) {
       // $cmd = 'diskinfo -v /dev/' . $value . ' | tail -n +2';
       $cmd = 'smartctl -i /dev/' . $value . ' | egrep \'Family|Capacity|Rotation\' | cut -d : -f2';
       $results = explode("\n" , Shell::exec($cmd));
@@ -35,6 +27,11 @@ class Disk {
 		$results = Shell::exec($cmd);
 		// needs work
 		return explode("\n", $results);
+	}
+
+	public function getPoolList() {
+		$cmd = 'zpool list | tail -n +2';
+		return preg_split('/\h+/', Shell::exec($cmd))[0];
 	}
 
 }
