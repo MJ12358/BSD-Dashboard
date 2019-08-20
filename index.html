@@ -160,26 +160,6 @@
 
 				<div class="flex-item box-shadow fade-in">
 					<div class="container__header">
-						<div>Memory Usage</div>
-						<div class="container__info" data-name="memory-usage"></div>
-					</div>
-					<div class="container__chart">
-						<canvas id="memory-usage-chart"></canvas>
-					</div>
-				</div>
-
-				<div class="flex-item box-shadow fade-in">
-					<div class="container__header">
-						<div id="disk-usage-header">Dataset Usage</div>
-						<div class="container__info" data-name="disk-usage"></div>
-					</div>
-					<div class="container__chart">
-						<canvas id="disk-usage-chart"></canvas>
-					</div>
-				</div>
-
-				<div class="flex-item box-shadow fade-in">
-					<div class="container__header">
 						<div>UPS Stats</div>
 						<div class="container__info" data-name="ups-info"></div>
 					</div>
@@ -240,11 +220,48 @@
 					</div>
 				</div>
 
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Dataset Usage</div>
+						<div class="container__info" data-name="dataset-usage"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="disk-used_ds-chart"></canvas>
+					</div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Snapshot Usage</div>
+						<div class="container__info" data-name="snapshot-usage"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="disk-used_snap-chart"></canvas>
+					</div>
+				</div>
+
 			</div>
 		</section>
 
 		<section class="slds-vertical-tabs__content slds-hide" id="tab-3" role="tabpanel" aria-labelledby="tab-3__nav">
 			<div class="flex-container">
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Memory Info</div>
+					</div>
+					<div id="memory-info" class="container__chart"></div>
+				</div>
+
+				<div class="flex-item box-shadow fade-in">
+					<div class="container__header">
+						<div>Memory Usage</div>
+						<div class="container__info" data-name="memory-usage"></div>
+					</div>
+					<div class="container__chart">
+						<canvas id="memory-usage-chart"></canvas>
+					</div>
+				</div>
 
 				<div class="flex-item box-shadow fade-in">
 					<div class="container__header">
