@@ -3,10 +3,9 @@ require_once 'memory.php';
 
 class MemoryUsage extends Memory {
 
-	public $mem_usage;
+	private $mem_usage;
 
 	public function __construct() {
-		// parent::__construct();
 		echo json_encode(array(
 			'data' => $this->getCurrentUsage(),
 			'total' => $this->getTotal(),
@@ -14,13 +13,12 @@ class MemoryUsage extends Memory {
 		));
 	}
 
-  public function getCurrentUsage() {
+  private function getCurrentUsage() {
     $cmd = 'top -btIquz | tail -n +4 | head -2 | cut -d : -f2';
-    $result = explode(', ', preg_replace("/\n\s/", ', ', Shell::exec($cmd)));
-    // $result = explode(', ', $result);
+    $output = explode(', ', preg_replace("/\n\s/", ', ', Shell::exec($cmd)));
     $results = array();
-    foreach($result as $k => $v) {
-      $values = explode(' ', $v);
+    foreach($output as $key => $value) {
+      $values = explode(' ', $value);
       if ($values[1] !== 'Total' && $values[1] !== 'Wired') {
         $results[$values[1]] = Convert::to_bytes($values[0]);
       }
