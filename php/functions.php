@@ -1,6 +1,5 @@
 <?php
 
-// sysctl kstat
 // systat -vmstat
 
 class Shell {
@@ -45,7 +44,7 @@ class Convert {
   }
 
   public static function to_bytes($value) {
-    // only works if the LAST char is K,M,G,T etc...
+    // only works if the LAST char is K,M,G,T AND there is no space between...
     $num = substr($value, 0, -1);
     switch(strtoupper(substr($value, -1))) {
       case 'K':
