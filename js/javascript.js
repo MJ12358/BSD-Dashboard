@@ -281,6 +281,92 @@ var CpuTemperatureChart = (function(undefined) {
 }());
 
 /**
+ * Cpu usage per core chart
+ */
+var CpuUsagePerCoreChart = (function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('cpu-usage-per-core-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update(true);
+	};
+
+	function update(init) {
+		Xhr.request({ url: 'php/cpu/cpu.usagepercore.php' })
+			.then(r => {
+				document.querySelector('[data-name="cpu-usage-per-core"]').textContent = `${r.total} %`;
+				if (init === true) {
+					Object.keys(r.data).forEach((v, i) => {
+						chart.config.data.datasets.push({
+							label: v,
+							data: [],
+							backgroundColor: colorsAlpha[i],
+							borderColor: colors[i],
+							pointBorderColor: colors[i],
+							pointHoverBorderColor: colors[i]
+						});
+					});
+				}
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: Object.values(r.data)[i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: []
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 60000,
+						refresh: 10000,
+						delay: 10000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index',
+				// callbacks: ChartModule.tooltip.percentage(chart),
+				labelColor: function(tooltipItem, chart) {
+					return {
+						backgroundColor: colors[tooltipItem.datasetIndex]
+					}
+				},
+				itemSort: function(a, b) {
+					return b.value - a.value;
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
  * Disk bandwidth chart
  */
 var DiskBandwidthChart = (function(undefined) {
@@ -451,13 +537,15 @@ var DiskTemperatureChart = (function(undefined) {
 /**
  * Disk usage chart
  */
+//! maybe make the 'config' an instance...
 var DiskUsageChart = (function(undefined) {
 
-	let chart;
+	let chart_used_ds;
+	let chart_used_snap;
 
 	function init() {
-		let ctx = document.getElementById('disk-usage-chart').getContext('2d');
-		chart = new Chart(ctx, config);
+		chart_used_ds = new Chart(document.getElementById('disk-used_ds-chart').getContext('2d'), config);
+		chart_used_snap = new Chart(document.getElementById('disk-used_snap-chart').getContext('2d'), configb);
 		update();
 		setInterval(() => update(), 60000);
 	}
@@ -465,24 +553,36 @@ var DiskUsageChart = (function(undefined) {
 	function update() {
 		Xhr.request({ url: 'php/disk/disk.usage.php' })
 			.then(r => {
-				document.querySelector('[data-name="disk-usage"]').textContent = r.total;
+				document.querySelector('[data-name="dataset-usage"]').innerHTML = `${Convert.fromBytes(r.total_ds)}</br>${Convert.fromBytes(r.total)}`;
+				document.querySelector('[data-name="snapshot-usage"]').innerHTML = `${Convert.fromBytes(r.total_snap)}</br>${Convert.fromBytes(r.total)}`;
 				for (let key in r.data) {
-					chart.data.labels.push(key);
-					chart.data.datasets[0].data.push(r.data[key].used_ds)
+					chart_used_ds.data.labels.push(key);
+					chart_used_ds.data.datasets[0].data.push(r.data[key].used_ds);
+					chart_used_snap.data.labels.push(key);
+					chart_used_snap.data.datasets[0].data.push(r.data[key].used_snap);
 				}
-				chart.data.labels.length = Object.keys(r.data).length;
-				chart.data.datasets[0].data.length = Object.keys(r.data).length;
-				chart.update();
+				var length = Object.keys(r.data).length;
+				chart_used_ds.data.labels.length = length;
+				chart_used_snap.data.labels.length = length
+				chart_used_ds.data.datasets[0].data.length = length;
+				chart_used_snap.data.datasets[0].data.length = length;
+				// console.log(chart_used_ds.data.labels);
+				// console.log(chart_used_ds.data.datasets[0].data);
+				// console.log(chart_used_snap.data.labels);
+				// console.log(chart_used_snap.data.datasets[0].data);
+				chart_used_ds.update();
+				// chart_used_snap.update();
 			})
 			.catch(e => console.error(e));
 	}
 
-	let config = {
+	let config, configb;
+	config = configb = {
 		type: 'pie',
 		data: {
-			labels: [],
+			// labels: [],
 			datasets: [{
-				data: [],
+				// data: [],
 				backgroundColor: colors
 			}]
 		},
@@ -511,6 +611,26 @@ var DiskUsageChart = (function(undefined) {
 			}
 		}
 	};
+
+	init();
+
+}());
+
+/**
+ * Memory info table
+ */
+var MemoryInfoTable = (function() {
+
+	function init() {
+		Xhr.request({ url: 'php/memory/memory.info.php' })
+			.then(r => {
+				Table.createVertical('memory-info', r.info);
+				for (let key in r.dimms) {
+					Table.createVertical('memory-info', r.dimms[key]);
+				}
+			})
+			.catch(e => console.error(e));
+	}
 
 	init();
 
@@ -572,6 +692,97 @@ var MemoryUsageChart = (function(undefined) {
 		play: init,
 		pause: pause
 	};
+
+}());
+
+/**
+ * Memory usage by type chart
+ */
+var MemoryUsageByTypeChart = (function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('memory-usage-by-type-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update(true);
+	};
+
+	function update(init) {
+		Xhr.request({ url: 'php/memory/memory.usage.php' })
+			.then(r => {
+				if (init === true) {
+					Object.keys(r.data).forEach((v, i) => {
+						chart.config.data.datasets.push({
+							label: v,
+							data: [],
+							backgroundColor: colorsAlpha[i],
+							borderColor: colors[i],
+							pointBorderColor: colors[i],
+							pointHoverBorderColor: colors[i]
+						});
+					});
+				}
+				chart.config.data.datasets.forEach((v, i) => {
+					v.data.push({
+						x: Date.now(),
+						y: Object.values(r.data)[i]
+					});
+				});
+				chart.update({ preservation: true });
+			})
+			.catch(e => console.error(e));
+	};
+
+	let config = {
+		type: 'line',
+		data: {
+			datasets: []
+		},
+		options: {
+			scales: {
+				xAxes: [{
+					type: 'realtime',
+					realtime: {
+						duration: 60000,
+						refresh: 10000,
+						delay: 10000,
+						onRefresh: update
+					}
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true,
+						callback: Convert.fromBytes
+					}
+				}]
+			},
+			plugins: {
+				streaming: {
+					frameRate: 30
+				}
+			},
+			tooltips: {
+				mode: 'index',
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
+						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
+					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.datasetIndex]
+						}
+					}
+				},
+				itemSort: function(a, b) {
+					return b.value - a.value;
+				}
+			}
+		}
+	};
+
+	init();
 
 }());
 
@@ -819,182 +1030,6 @@ var SystemInfoTable = (function() {
 			.then(r => Table.createVertical('system-info', r))
 			.catch(e => console.error(e));
 	}
-
-	init();
-
-}());
-
-/**
- * Cpu usage per core chart
- */
-var CpuUsagePerCoreChart = (function(undefined) {
-
-	let chart;
-
-	function init() {
-		let ctx = document.getElementById('cpu-usage-per-core-chart').getContext('2d');
-		chart = new Chart(ctx, config);
-		update(true);
-	};
-
-	function update(init) {
-		Xhr.request({ url: 'php/cpu/cpu.usagepercore.php' })
-			.then(r => {
-				document.querySelector('[data-name="cpu-usage-per-core"]').textContent = `${r.total} %`;
-				if (init === true) {
-					Object.keys(r.data).forEach((v, i) => {
-						chart.config.data.datasets.push({
-							label: v,
-							data: [],
-							backgroundColor: colorsAlpha[i],
-							borderColor: colors[i],
-							pointBorderColor: colors[i],
-							pointHoverBorderColor: colors[i]
-						});
-					});
-				}
-				chart.config.data.datasets.forEach((v, i) => {
-					v.data.push({
-						x: Date.now(),
-						y: Object.values(r.data)[i]
-					});
-				});
-				chart.update({ preservation: true });
-			})
-			.catch(e => console.error(e));
-	};
-
-	let config = {
-		type: 'line',
-		data: {
-			datasets: []
-		},
-		options: {
-			scales: {
-				xAxes: [{
-					type: 'realtime',
-					realtime: {
-						duration: 60000,
-						refresh: 10000,
-						delay: 10000,
-						onRefresh: update
-					}
-				}],
-				yAxes: [{
-					ticks: {
-						beginAtZero: true
-					}
-				}]
-			},
-			plugins: {
-				streaming: {
-					frameRate: 30
-				}
-			},
-			tooltips: {
-				mode: 'index',
-				labelColor: function(tooltipItem, chart) {
-					return {
-						backgroundColor: colors[tooltipItem.datasetIndex]
-					}
-				},
-				itemSort: function(a, b) {
-					return b.value - a.value;
-				}
-			}
-		}
-	};
-
-	init();
-
-}());
-
-/**
- * Memory usage by type chart
- */
-var MemoryUsageByTypeChart = (function(undefined) {
-
-	let chart;
-
-	function init() {
-		let ctx = document.getElementById('memory-usage-by-type-chart').getContext('2d');
-		chart = new Chart(ctx, config);
-		update(true);
-	};
-
-	function update(init) {
-		Xhr.request({ url: 'php/memory/memory.usage.php' })
-			.then(r => {
-				if (init === true) {
-					Object.keys(r.data).forEach((v, i) => {
-						chart.config.data.datasets.push({
-							label: v,
-							data: [],
-							backgroundColor: colorsAlpha[i],
-							borderColor: colors[i],
-							pointBorderColor: colors[i],
-							pointHoverBorderColor: colors[i]
-						});
-					});
-				}
-				chart.config.data.datasets.forEach((v, i) => {
-					v.data.push({
-						x: Date.now(),
-						y: Object.values(r.data)[i]
-					});
-				});
-				chart.update({ preservation: true });
-			})
-			.catch(e => console.error(e));
-	};
-
-	let config = {
-		type: 'line',
-		data: {
-			datasets: []
-		},
-		options: {
-			scales: {
-				xAxes: [{
-					type: 'realtime',
-					realtime: {
-						duration: 60000,
-						refresh: 10000,
-						delay: 10000,
-						onRefresh: update
-					}
-				}],
-				yAxes: [{
-					ticks: {
-						beginAtZero: true,
-						callback: Convert.fromBytes
-					}
-				}]
-			},
-			plugins: {
-				streaming: {
-					frameRate: 30
-				}
-			},
-			tooltips: {
-				mode: 'index',
-				callbacks: {
-					label: function(tooltipItem, data) {
-						let formatted = Convert.fromBytes(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y);
-						return `${data.datasets[tooltipItem.datasetIndex].label}: ${formatted}`;
-					},
-					labelColor: function(tooltipItem, chart) {
-						return {
-							backgroundColor: colors[tooltipItem.datasetIndex]
-						}
-					}
-				},
-				itemSort: function(a, b) {
-					return b.value - a.value;
-				}
-			}
-		}
-	};
 
 	init();
 
