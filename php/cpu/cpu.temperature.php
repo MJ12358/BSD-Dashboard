@@ -3,10 +3,9 @@ require_once 'cpu.php';
 
 class CpuTemperature extends Cpu {
 
-	public $average_temperature;
+	private $average_temperature;
 
 	public function __construct() {
-		parent::__construct();
 		echo json_encode(array(
 			'data' => $this->getTemperature(),
 			'tjmax' => $this->getTj_max(),
@@ -14,9 +13,9 @@ class CpuTemperature extends Cpu {
 		));
 	}
 
-  public function getTemperature() {
+  private function getTemperature() {
 		$result = array();
-    for($i = 0; $i < $this->$core_count; $i++) {
+    for($i = 0; $i < $this->getCores(); $i++) {
 			$cmd = 'sysctl -n dev.cpu.' . $i . '.temperature';
 			$temp = floatval(explode('C', Shell::exec($cmd))[0]);
 			$result['CPU ' . $i] = $temp;
@@ -25,7 +24,7 @@ class CpuTemperature extends Cpu {
     return $result;
   }
 
-  public function getTj_max() {
+  private function getTj_max() {
     $cmd = 'sysctl -n dev.cpu.0.coretemp.tjmax';
     return floatval(explode('C', Shell::exec($cmd))[0]);
   }
