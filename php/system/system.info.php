@@ -21,8 +21,7 @@ class SystemInfo extends System {
 	// requires root
   public function getBiosVersion() {
     $cmd = 'dmidecode -qt bios | egrep \'Vendor|Version\' | cut -d : -f2';
-    $result = preg_replace("/\s+/", ' ', Shell::exec($cmd));
-    return $result;
+    return preg_replace("/\s+/", ' ', Shell::exec($cmd));
   }
 
 	// requires root
