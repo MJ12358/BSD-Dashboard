@@ -56,8 +56,8 @@ body {
 .container__chart {
 	height: 35vh;
 	margin: .75rem;
+	min-width: 480px;
 	position: relative;
-	width: 480px;
 }
 
 .container__table {
