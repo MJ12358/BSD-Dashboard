@@ -234,7 +234,7 @@ var CpuTemperatureChart = (function(undefined) {
 		let ctx = document.getElementById('cpu-temperature-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
-		setInterval(() => update(), 5000);
+		setInterval(() => update(), 7500);
 	};
 
 	function update() {
@@ -474,7 +474,7 @@ var DiskTemperatureChart = (function(undefined) {
 		let ctx = document.getElementById('disk-temperature-chart').getContext('2d');
 		chart = new Chart(ctx, config);
 		update();
-		setInterval(() => update(), 5000);
+		setInterval(() => update(), 7500);
 	}
 
 	function update() {
@@ -625,9 +625,12 @@ var MemoryInfoTable = (function() {
 		Xhr.request({ url: 'php/memory/memory.info.php' })
 			.then(r => {
 				Table.createVertical('memory-info', r.info);
-				for (let key in r.dimms) {
-					Table.createVertical('memory-info', r.dimms[key]);
-				}
+				// for (let key in r.dimms) {
+				// 	let el = document.createElement('div');
+				// 	el.id = key;
+				// 	document.getElementById('memory-info').appendChild(el);
+				// 	Table.createVertical(key, r.dimms[key]);
+				// }
 			})
 			.catch(e => console.error(e));
 	}
@@ -781,6 +784,26 @@ var MemoryUsageByTypeChart = (function(undefined) {
 			}
 		}
 	};
+
+	init();
+
+}());
+
+/**
+ * Network info table
+ */
+var NetworkInfoTable = (function() {
+
+	function init() {
+		update();
+		setInterval(() => update(), 10000);
+	}
+
+	function update() {
+		Xhr.request({ url: 'php/network/network.info.php' })
+			.then(r => Table.createHorizontal('network-info', r.socks))
+			.catch(e => console.error(e));
+	}
 
 	init();
 
@@ -1063,6 +1086,7 @@ var Table = (function(undefined) {
 			let tr_tbody = document.createElement('tr');
 			Object.values(responseValue).forEach(v => {
 				let td = document.createElement('td');
+				td.classList.add('slds-truncate');
 				td.appendChild(document.createTextNode(v));
 				tr_tbody.appendChild(td);
 			});
