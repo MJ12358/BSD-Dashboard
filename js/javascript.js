@@ -913,6 +913,77 @@ var NetworkBandwidthChart = (function(undefined) {
 }());
 
 /**
+ * Network temperature chart
+ */
+var NetworkTemperatureChart = (function(undefined) {
+
+	let chart;
+
+	function init() {
+		let ctx = document.getElementById('network-temperature-chart').getContext('2d');
+		chart = new Chart(ctx, config);
+		update();
+		setInterval(() => update(), 7500);
+	}
+
+	function update() {
+		Xhr.request({ url: 'php/network/network.temperature.php' })
+			.then(r => {
+				document.querySelector('[data-name="network-temperature"]').textContent = r.avg + " \u2103";
+				chart.data.labels = Object.keys(r.data);
+				chart.data.datasets[0].data = Object.values(r.data);
+				chart.update();
+			})
+			.catch(e => console.error(e));
+	}
+
+	let config = {
+		type: 'horizontalBar',
+		data: {
+			labels: [],
+			datasets: [{
+				data: [],
+				backgroundColor: colors
+			}]
+		},
+		options: {
+			legend: {
+				display: false
+			},
+			scales: {
+				xAxes: [{
+					ticks: {
+						beginAtZero: false,
+						min: 20,
+						max: 100
+					}
+				}]
+			},
+			tooltips: {
+				callbacks: {
+					label: function(tooltipItem, data) {
+						let dataset = data.datasets[tooltipItem.datasetIndex];
+						let currentValue = dataset.data[tooltipItem.index];
+						return currentValue + " \u2103";
+					},
+					labelColor: function(tooltipItem, chart) {
+						return {
+							backgroundColor: colors[tooltipItem.index]
+						}
+					},
+					title: function(tooltipItem, data) {
+						return data.labels[tooltipItem[0].index];
+					}
+				}
+			}
+		}
+	};
+
+	init();
+
+}());
+
+/**
  * UPS usage chart
  */
 var UpsUsageChart = (function(undefined) {
