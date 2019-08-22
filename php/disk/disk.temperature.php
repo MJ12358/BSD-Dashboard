@@ -3,10 +3,9 @@ require_once 'disk.php';
 
 class DiskTemperature extends Disk {
 
-	public $average_temperature;
+	private $average_temperature;
 
 	public function __construct() {
-		// parent::__construct();
 		echo json_encode(array(
 			'data' => $this->getTemperature(),
 			'avg' => $this->average_temperature
