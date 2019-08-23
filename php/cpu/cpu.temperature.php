@@ -16,7 +16,7 @@ class CpuTemperature extends Cpu {
   private function getTemperature() {
 		$result = array();
     for($i = 0; $i < $this->getCores(); $i++) {
-			$cmd = 'sysctl -n dev.cpu.' . $i . '.temperature';
+			$cmd = "sysctl -n dev.cpu.$i.temperature";
 			$temp = floatval(explode('C', Shell::exec($cmd))[0]);
 			$result['CPU ' . $i] = $temp;
 		}

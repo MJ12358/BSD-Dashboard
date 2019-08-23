@@ -16,7 +16,7 @@ class DiskTemperature extends Disk {
   public function getTemperature() {
 		$result = array();
     foreach($this->getNames() as $key => $value) {
-      $cmd = 'smartctl -A /dev/' . $value . ' | awk \'/Temperature_Celsius/{print $0}\' | awk \'{print $10}\'';
+      $cmd = "smartctl -A /dev/$value | awk '/Temperature_Celsius/{print $0}' | awk '{print $10}'";
 			$temp = Shell::exec($cmd);
 			if ($temp) {
 				$result[$value] = $temp;

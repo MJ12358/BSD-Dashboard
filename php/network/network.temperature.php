@@ -15,8 +15,8 @@ class NetworkTemperature extends Network {
   private function getTemperature() {
 		$result = array();
 		foreach ($this->getInterfaceNames() as $key => $value) {
-			$nic = preg_split('/' . $key . '/', $value)[0];
-			$cmd = 'sysctl -n dev.' . $nic . '.' . $key . '.phy.temp';
+			$nic = preg_split("/$key/", $value)[0];
+			$cmd = "sysctl -n dev.$nic.$key.phy.temp";
 			$result[$value] = Shell::exec($cmd);
 		}
 		$this->average_temperature = round(array_sum(array_values($result)) / count($result), 2);
