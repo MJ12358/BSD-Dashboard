@@ -22,7 +22,7 @@ class Usage extends Disk {
   }
 
   private function getDatasetUsage() {
-    $cmd = 'zfs list -o name,usedds,usedsnap | tail -n +3';
+    $cmd = 'zfs list -o name,usedds,usedsnap | tail +3';
     $datasets = explode(PHP_EOL, preg_replace('/\h+/', ' ', Shell::exec($cmd)));
     $result = array();
     foreach ($datasets as $key => $value) {

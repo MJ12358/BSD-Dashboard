@@ -25,7 +25,7 @@ class SystemProcesses extends System {
 
   private function getTopProcesses() {
     // would be nice to output 'command' but it may have spaces in it ('args' seems to do the same thing)
-    $cmd = 'ps -rAo user,pid,time,nlwp,pcpu,pmem,comm,dsiz,etimes | grep -v root | head -10 | tail -n +2';
+    $cmd = 'ps -rAo user,pid,time,nlwp,pcpu,pmem,comm,dsiz,etimes | grep -v root | head -10 | tail +2';
     $output = explode(PHP_EOL, Shell::exec($cmd));
     $results = array();
     foreach($output as $key => $value) {

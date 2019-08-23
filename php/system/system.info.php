@@ -30,7 +30,7 @@ class SystemInfo extends System {
     return preg_replace("/\s+/", ' ', Shell::exec($cmd));
 	}
 	
-	// dmesg | grep -i cpu | head -n 1 | cut -d : -f2 (detailed cpu info)
+	// dmesg | grep -i cpu | head +1 | cut -d : -f2 (detailed cpu info)
 	public function getCpuModel() {
 		$cmd = 'sysctl -n hw.model';
     return Shell::exec($cmd);

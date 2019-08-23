@@ -33,7 +33,7 @@ class Bandwidth extends Disk {
 
 	public function getIo() {
 		// you could use top (and press -m to view iostats...)
-		$cmd = 'zpool iostat tank 1 2 | tail -n -1';
+		$cmd = 'zpool iostat tank 1 2 | tail -1';
 		$result = preg_split('/\h+/', Shell::exec($cmd));
     return array(
       'out' => $result[3],
@@ -43,7 +43,7 @@ class Bandwidth extends Disk {
 
 	public static function getIoPerDevice() {
 		// -c should be 1 not two (also i don't think -o is doing anything here)
-		$cmd = 'iostat -dox -t da -c 1 | tail -n +3';
+		$cmd = 'iostat -dox -t da -c 1 | tail +3';
 		// $result = preg_split('/extended device statistics/', Shell::exec($cmd));
 		$result = preg_replace('/\h+/', ' ', Shell::exec($cmd));
 		$result = explode('/[\n\t\r]+/', $result);

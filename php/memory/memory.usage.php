@@ -14,7 +14,7 @@ class MemoryUsage extends Memory {
 	}
 
   private function getCurrentUsage() {
-    $cmd = 'top -btIquz | tail -n +4 | head -2 | cut -d : -f2';
+    $cmd = 'top -btIquz | tail +4 | head -2 | cut -d : -f2';
     $output = explode(', ', preg_replace("/\n\s/", ', ', Shell::exec($cmd)));
     $results = array();
     foreach($output as $key => $value) {
