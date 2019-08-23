@@ -10,7 +10,7 @@ class SystemProcesses extends System {
 		));
 	}
 
-  public function getProcessCount() {
+  private function getProcessCount() {
     $proc_count = 0;
     $dh = opendir('/proc');
     while ($dir = readdir($dh)) {
@@ -23,7 +23,7 @@ class SystemProcesses extends System {
     return $proc_count;
   }
 
-  public function getTopProcesses() {
+  private function getTopProcesses() {
     // would be nice to output 'command' but it may have spaces in it ('args' seems to do the same thing)
     $cmd = 'ps -rAo user,pid,time,nlwp,pcpu,pmem,comm,dsiz,etimes | grep -v root | head -10 | tail -n +2';
     $output = explode(PHP_EOL, Shell::exec($cmd));

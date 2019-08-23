@@ -3,8 +3,8 @@ require_once 'disk.php';
 
 class Usage extends Disk {
 
-	public $total_ds = 0;
-	public $total_snap = 0;
+	private $total_ds = 0;
+	private $total_snap = 0;
 
 	public function __construct() {
 		echo json_encode(array(
@@ -15,13 +15,13 @@ class Usage extends Disk {
 		));
 	}
 
-  public function getPoolTotal() {
+  private function getPoolTotal() {
     $cmd = 'zpool list -o name,size | tail -1';
 		$result = explode(' ', Shell::exec($cmd))[2];
 		return Convert::to_bytes($result);
   }
 
-  public function getDatasetUsage() {
+  private function getDatasetUsage() {
     $cmd = 'zfs list -o name,usedds,usedsnap | tail -n +3';
     $datasets = explode(PHP_EOL, preg_replace('/\h+/', ' ', Shell::exec($cmd)));
     $result = array();
